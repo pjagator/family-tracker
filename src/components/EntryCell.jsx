@@ -1,0 +1,26 @@
+export default function EntryCell({ entry, date, isToday, isWeekend, onTap }) {
+  const bg = isToday ? 'bg-today' : isWeekend ? 'bg-weekend' : 'bg-white'
+  const hasContent = entry && entry.content
+
+  return (
+    <button
+      onClick={onTap}
+      className={`${bg} border-r border-b border-gray-200 p-1.5 text-left min-h-[44px] w-full active:bg-indigo-50 transition relative`}
+    >
+      {hasContent ? (
+        <span
+          className={`text-[13px] leading-tight block ${
+            entry.is_complete ? 'line-through text-gray-400' : 'text-gray-800'
+          }`}
+        >
+          {entry.is_test && (
+            <span className="inline-block w-1.5 h-1.5 rounded-full bg-test mr-1 align-middle" />
+          )}
+          {entry.content.length > 30 ? entry.content.slice(0, 30) + '...' : entry.content}
+        </span>
+      ) : (
+        <span className="text-[13px] text-gray-300 opacity-0 hover:opacity-100 transition">+</span>
+      )}
+    </button>
+  )
+}
