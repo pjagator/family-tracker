@@ -1,5 +1,6 @@
 const TABS = [
   { key: 'week', label: 'Week', icon: '📅' },
+  { key: 'camps', label: 'Camps', icon: '🏕️' },
   { key: 'settings', label: 'Settings', icon: '⚙️' },
 ]
 
