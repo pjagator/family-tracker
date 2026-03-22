@@ -1,33 +1,59 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
-export function useEntries(weekId, userId) {
+export function useEntries(weekId, familyId) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(false)
 
   const loadEntries = useCallback(async () => {
-    if (!weekId || !userId) return
+    if (!weekId || !familyId) return
     setLoading(true)
 
     const { data, error } = await supabase
       .from('entries')
       .select('*')
       .eq('week_id', weekId)
-      .eq('user_id', userId)
+      .eq('family_id', familyId)
       .order('sort_order', { ascending: true })
 
     if (error) console.error('Failed to load entries:', error)
     else setEntries(data || [])
     setLoading(false)
-  }, [weekId, userId])
+  }, [weekId, familyId])
 
+  // Initial load
   useEffect(() => {
     loadEntries()
   }, [loadEntries])
 
+  // Realtime subscription -- listen for changes from other family members
+  useEffect(() => {
+    if (!weekId || !familyId) return
+
+    const channel = supabase
+      .channel(`entries:${weekId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'entries',
+          filter: `week_id=eq.${weekId}`,
+        },
+        () => {
+          // Reload all entries on any change
+          loadEntries()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [weekId, familyId, loadEntries])
+
   const upsertEntry = async (entry) => {
     if (entry.id) {
-      // Update
       const { error } = await supabase
         .from('entries')
         .update({
@@ -43,11 +69,10 @@ export function useEntries(weekId, userId) {
         return { error }
       }
     } else {
-      // Insert
       const { error } = await supabase
         .from('entries')
         .insert({
-          user_id: userId,
+          family_id: familyId,
           week_id: weekId,
           date: entry.date,
           person: entry.person,
@@ -65,6 +90,7 @@ export function useEntries(weekId, userId) {
       }
     }
 
+    // Local reload happens immediately; realtime handles the other client
     await loadEntries()
     return { error: null }
   }

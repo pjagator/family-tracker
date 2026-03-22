@@ -20,14 +20,14 @@ function addDays(d, n) {
   return r
 }
 
-export function useWeek(userId) {
+export function useWeek(familyId) {
   const [week, setWeek] = useState(null)
   const [weekDates, setWeekDates] = useState([])
   const [loading, setLoading] = useState(true)
   const [currentMonday, setCurrentMonday] = useState(() => getMonday(new Date()))
 
   const loadOrCreateWeek = useCallback(async (monday) => {
-    if (!userId) return
+    if (!familyId) return
     setLoading(true)
 
     const startDate = formatDate(monday)
@@ -37,7 +37,7 @@ export function useWeek(userId) {
     let { data, error } = await supabase
       .from('weeks')
       .select('*')
-      .eq('user_id', userId)
+      .eq('family_id', familyId)
       .eq('start_date', startDate)
       .single()
 
@@ -45,7 +45,7 @@ export function useWeek(userId) {
       // Not found, create it
       const { data: created, error: createErr } = await supabase
         .from('weeks')
-        .insert({ user_id: userId, start_date: startDate, end_date: endDate })
+        .insert({ family_id: familyId, start_date: startDate, end_date: endDate })
         .select()
         .single()
 
@@ -70,7 +70,7 @@ export function useWeek(userId) {
     }
     setWeekDates(dates)
     setLoading(false)
-  }, [userId])
+  }, [familyId])
 
   useEffect(() => {
     loadOrCreateWeek(currentMonday)

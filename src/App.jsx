@@ -1,21 +1,25 @@
 import { useState } from 'react'
 import { useAuth } from './hooks/useAuth'
+import { useFamily } from './hooks/useFamily'
 import { useWeek } from './hooks/useWeek'
 import { useEntries } from './hooks/useEntries'
 import Auth from './components/Auth'
+import FamilySetup from './components/FamilySetup'
 import WeekView from './components/WeekView'
 import EntrySheet from './components/EntrySheet'
 import BottomNav from './components/BottomNav'
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth()
-  const { week, weekDates, loading: weekLoading, goToPrevWeek, goToNextWeek, goToToday } = useWeek(user?.id)
-  const { entries, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, user?.id)
+  const { family, loading: familyLoading, createFamily, joinFamily } = useFamily(user?.id)
+  const { week, weekDates, loading: weekLoading, goToPrevWeek, goToNextWeek, goToToday } = useWeek(family?.id)
+  const { entries, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
 
   const [activeTab, setActiveTab] = useState('week')
   const [activeCell, setActiveCell] = useState(null)
 
-  if (authLoading) {
+  // Loading
+  if (authLoading || (user && familyLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-navy">
         <div className="text-white text-sm">Loading...</div>
@@ -23,8 +27,14 @@ export default function App() {
     )
   }
 
+  // Not signed in
   if (!user) {
     return <Auth onSignIn={signIn} onSignUp={signUp} />
+  }
+
+  // Signed in but no family
+  if (!family) {
+    return <FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} />
   }
 
   return (
@@ -51,7 +61,14 @@ export default function App() {
       {activeTab === 'settings' && (
         <div className="p-6 pb-24">
           <h2 className="text-lg font-bold text-navy mb-4">Settings</h2>
-          <p className="text-sm text-slate mb-6">{user.email}</p>
+          <p className="text-sm text-slate mb-2">{user.email}</p>
+          <div className="bg-gray-50 rounded-lg p-3 mb-6">
+            <p className="text-xs text-slate mb-1">Family: <span className="font-semibold text-navy">{family.name}</span></p>
+            <p className="text-xs text-slate">
+              Invite code: <span className="font-mono font-semibold text-navy tracking-wider">{family.invite_code}</span>
+            </p>
+            <p className="text-[11px] text-gray-400 mt-1">Share this code so others can join your family.</p>
+          </div>
           <button
             onClick={signOut}
             className="w-full py-3 border border-gray-200 rounded-lg text-sm text-slate active:bg-gray-50 transition"
