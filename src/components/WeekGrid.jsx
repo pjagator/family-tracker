@@ -18,8 +18,7 @@ const PEOPLE = [
   {
     key: 'beau',
     label: 'Beau',
-    color: 'border-navy bg-navy/5',
-    textColor: 'text-navy',
+    headerBg: '#1a2744',
     rows: [
       { key: 'math', label: 'Math' },
       { key: 'science', label: 'Science' },
@@ -34,8 +33,7 @@ const PEOPLE = [
   {
     key: 'lucia',
     label: 'Lucia',
-    color: 'border-purple-600 bg-purple-50',
-    textColor: 'text-purple-700',
+    headerBg: '#5b3a6b',
     rows: [
       { key: 'homework', label: 'Homework' },
       { key: 'specials', label: 'Specials' },
@@ -46,8 +44,7 @@ const PEOPLE = [
   {
     key: 'niva',
     label: 'Niva',
-    color: 'border-teal-500 bg-teal-50',
-    textColor: 'text-teal-700',
+    headerBg: '#1a5c5c',
     rows: [
       { key: 'activities', label: 'Activities' },
       { key: 'notes', label: 'Notes' },
@@ -57,8 +54,7 @@ const PEOPLE = [
   {
     key: 'allie',
     label: 'Allie',
-    color: 'border-stone-400 bg-stone-50',
-    textColor: 'text-stone-600',
+    headerBg: '#6b6b6b',
     rows: [
       { key: 'work', label: 'Work' },
       { key: 'events', label: 'Events' },
@@ -68,8 +64,7 @@ const PEOPLE = [
   {
     key: 'patrick',
     label: 'Patrick',
-    color: 'border-slate-500 bg-slate-50',
-    textColor: 'text-slate-600',
+    headerBg: '#475569',
     rows: [
       { key: 'schedule', label: 'Schedule' },
       { key: 'notes', label: 'Notes' },
@@ -77,6 +72,8 @@ const PEOPLE = [
     defaultOpen: false,
   },
 ]
+
+const GRID_COLS = '90px repeat(7, 1fr)'
 
 export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
   const today = new Date().toISOString().split('T')[0]
@@ -93,7 +90,6 @@ export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
 
   const getDisplayEntry = (person, category, date) => {
     const entry = getEntry(person, category, date)
-    // Lucia specials auto-text
     if (person === 'lucia' && category === 'specials' && entry?.day_number && !entry?.content) {
       const placeholder = SPECIALS_ROTATION[entry.day_number]
       if (placeholder) return { ...entry, content: placeholder, _isPlaceholder: true }
@@ -103,67 +99,73 @@ export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
 
   return (
     <div className="overflow-x-auto">
-      <div className="grid min-w-[600px]" style={{ gridTemplateColumns: '90px repeat(7, 1fr)' }}>
+      <div className="min-w-[600px]">
 
         {/* Shared sticky date header */}
-        <div className="bg-gray-100 border-r border-b border-gray-300 p-1.5 sticky left-0 z-20" />
-        {weekDates.map((date, i) => {
-          const d = new Date(date + 'T00:00:00')
-          const isToday = date === today
-          const isWeekend = i >= 5
-          return (
-            <div
-              key={date}
-              className={`border-r border-b border-gray-300 p-1.5 text-center text-[11px] font-semibold sticky top-0 z-20 ${
-                isToday ? 'bg-today text-navy' : isWeekend ? 'bg-weekend text-slate' : 'bg-gray-100 text-slate'
-              }`}
-            >
-              <div>{DAY_ABBRS[i]}</div>
-              <div>{d.getMonth() + 1}/{d.getDate()}</div>
-            </div>
-          )
-        })}
+        <div className="grid sticky top-0 z-20" style={{ gridTemplateColumns: GRID_COLS }}>
+          <div className="bg-gray-100 border border-[#e2e8f0] p-1.5 sticky left-0 z-20" />
+          {weekDates.map((date, i) => {
+            const d = new Date(date + 'T00:00:00')
+            const isToday = date === today
+            const isWeekend = i >= 5
+            return (
+              <div
+                key={date}
+                className={`border border-l-0 border-[#e2e8f0] p-1.5 text-center text-[11px] font-semibold ${
+                  isToday ? 'bg-today text-navy' : isWeekend ? 'bg-weekend text-slate' : 'bg-gray-100 text-slate'
+                }`}
+              >
+                <div>{DAY_ABBRS[i]}</div>
+                <div>{d.getMonth() + 1}/{d.getDate()}</div>
+              </div>
+            )
+          })}
+        </div>
 
         {/* Person sections */}
-        {PEOPLE.map((person) => (
-          <div key={person.key} className="contents">
+        {PEOPLE.map((person, personIdx) => (
+          <div key={person.key} style={{ marginTop: personIdx > 0 ? '12px' : '0' }}>
 
-            {/* Person header row spanning all columns */}
+            {/* Person header bar */}
             <button
               onClick={() => toggleSection(person.key)}
-              className={`col-span-8 flex items-center gap-2 px-3 py-2 border-l-4 ${person.color} border-b border-gray-200 active:opacity-80 transition sticky left-0 z-10`}
-              style={{ gridColumn: '1 / -1' }}
+              className="w-full flex items-center gap-2 px-3 py-2.5 active:opacity-80 transition"
+              style={{ backgroundColor: person.headerBg }}
             >
-              <span className={`text-[13px] font-bold ${person.textColor}`}>{person.label}</span>
-              <span className={`text-[10px] text-slate transition-transform ${openSections[person.key] ? 'rotate-180' : ''}`}>
+              <span className="text-[13px] font-bold text-white">{person.label}</span>
+              <span className={`text-[10px] text-white/60 transition-transform ${openSections[person.key] ? 'rotate-180' : ''}`}>
                 ▼
               </span>
             </button>
 
             {/* Category rows */}
-            {openSections[person.key] && person.rows.map(({ key: cat, label }) => (
-              <div key={cat} className="contents">
-                <div className={`bg-gray-50 border-r border-b border-gray-200 border-l-4 ${person.color.split(' ')[0]} p-1.5 text-[12px] font-medium text-navy-light sticky left-0 z-10 flex items-center`}>
-                  {label}
-                </div>
-                {weekDates.map((date, i) => {
-                  const entry = getDisplayEntry(person.key, cat, date)
-                  const rawEntry = getEntry(person.key, cat, date)
-                  const isToday = date === today
-                  const isWeekend = i >= 5
-                  return (
-                    <EntryCell
-                      key={date}
-                      entry={entry}
-                      date={date}
-                      isToday={isToday}
-                      isWeekend={isWeekend}
-                      onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry })}
-                    />
-                  )
-                })}
+            {openSections[person.key] && (
+              <div className="grid" style={{ gridTemplateColumns: GRID_COLS }}>
+                {person.rows.map(({ key: cat, label }) => (
+                  <div key={cat} className="contents">
+                    <div className="bg-gray-50 border border-t-0 border-[#e2e8f0] p-1.5 text-[12px] font-medium text-gray-600 sticky left-0 z-10 flex items-center">
+                      {label}
+                    </div>
+                    {weekDates.map((date, i) => {
+                      const entry = getDisplayEntry(person.key, cat, date)
+                      const rawEntry = getEntry(person.key, cat, date)
+                      const isToday = date === today
+                      const isWeekend = i >= 5
+                      return (
+                        <EntryCell
+                          key={date}
+                          entry={entry}
+                          date={date}
+                          isToday={isToday}
+                          isWeekend={isWeekend}
+                          onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry })}
+                        />
+                      )
+                    })}
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
         ))}
       </div>

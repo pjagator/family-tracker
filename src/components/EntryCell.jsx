@@ -5,7 +5,7 @@ export default function EntryCell({ entry, date, isToday, isWeekend, onTap }) {
   return (
     <button
       onClick={onTap}
-      className={`${bg} border-r border-b border-gray-200 p-1.5 text-left min-h-[44px] w-full active:bg-indigo-50 transition relative`}
+      className={`${bg} border border-t-0 border-l-0 border-[#e2e8f0] p-1.5 text-left min-h-[44px] w-full active:bg-indigo-50 transition relative`}
     >
       {hasContent ? (
         <span
