@@ -145,6 +145,35 @@ export function useWeek(familyId) {
         return
       }
       data = created
+
+      // Auto-populate from recurring activities
+      const { data: recurring } = await supabase
+        .from('recurring')
+        .select('*')
+        .eq('family_id', familyId)
+        .eq('is_active', true)
+
+      if (recurring?.length) {
+        const autoEntries = []
+        for (const item of recurring) {
+          // Find the date in this week that matches the day_of_week
+          const matchDate = dates.find(d => new Date(d + 'T00:00:00').getDay() === item.day_of_week)
+          if (matchDate) {
+            autoEntries.push({
+              family_id: familyId,
+              week_id: data.id,
+              date: matchDate,
+              person: item.person,
+              category: item.category,
+              content: item.content,
+            })
+          }
+        }
+        if (autoEntries.length) {
+          const { error: entryErr } = await supabase.from('entries').insert(autoEntries)
+          if (entryErr) console.error('Failed to auto-populate recurring:', entryErr)
+        }
+      }
     } else if (error) {
       console.error('Failed to load week:', error)
       setLoading(false)

@@ -3,10 +3,12 @@ import { useAuth } from './hooks/useAuth'
 import { useFamily } from './hooks/useFamily'
 import { useWeek } from './hooks/useWeek'
 import { useEntries } from './hooks/useEntries'
+import { useRecurring } from './hooks/useRecurring'
 import Auth from './components/Auth'
 import FamilySetup from './components/FamilySetup'
 import WeekView from './components/WeekView'
 import EntrySheet from './components/EntrySheet'
+import RecurringManager from './components/RecurringManager'
 import BottomNav from './components/BottomNav'
 
 export default function App() {
@@ -18,17 +20,13 @@ export default function App() {
     setDayNumber, toggleGlobalNoSchool, togglePersonNoSchool,
   } = useWeek(family?.id)
   const { entries, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
+  const { items: recurringItems, add: addRecurring, remove: removeRecurring } = useRecurring(family?.id)
 
   const [activeTab, setActiveTab] = useState('week')
   const [activeCell, setActiveCell] = useState(null)
 
-  // Allie work toggle: upsert a simple entry
   const handleAllieToggle = async (entry) => {
-    await upsertEntry({
-      ...entry,
-      is_complete: false,
-      is_test: false,
-    })
+    await upsertEntry({ ...entry, is_complete: false, is_test: false })
   }
 
   if (authLoading || (user && familyLoading)) {
@@ -79,13 +77,22 @@ export default function App() {
         <div className="p-6 pb-24">
           <h2 className="text-lg font-bold text-navy mb-4">Settings</h2>
           <p className="text-sm text-slate mb-2">{user.email}</p>
-          <div className="bg-gray-50 rounded-lg p-3 mb-6">
+          <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <p className="text-xs text-slate mb-1">Family: <span className="font-semibold text-navy">{family.name}</span></p>
             <p className="text-xs text-slate">
               Invite code: <span className="font-mono font-semibold text-navy tracking-wider">{family.invite_code}</span>
             </p>
             <p className="text-[11px] text-gray-400 mt-1">Share this code so others can join your family.</p>
           </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 mb-4">
+            <RecurringManager
+              items={recurringItems}
+              onAdd={addRecurring}
+              onRemove={removeRecurring}
+            />
+          </div>
+
           <button
             onClick={signOut}
             className="w-full py-3 border border-gray-200 rounded-lg text-sm text-slate active:bg-gray-50 transition"
