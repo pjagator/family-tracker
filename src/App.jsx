@@ -12,13 +12,25 @@ import BottomNav from './components/BottomNav'
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth()
   const { family, loading: familyLoading, createFamily, joinFamily } = useFamily(user?.id)
-  const { week, weekDates, dayNumbers, noSchoolDays, loading: weekLoading, goToPrevWeek, goToNextWeek, goToToday, setDayNumber, toggleNoSchool } = useWeek(family?.id)
+  const {
+    week, weekDates, dayNumbers, globalNoSchool, personNoSchool, loading: weekLoading,
+    goToPrevWeek, goToNextWeek, goToToday,
+    setDayNumber, toggleGlobalNoSchool, togglePersonNoSchool,
+  } = useWeek(family?.id)
   const { entries, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
 
   const [activeTab, setActiveTab] = useState('week')
   const [activeCell, setActiveCell] = useState(null)
 
-  // Loading
+  // Allie work toggle: upsert a simple entry
+  const handleAllieToggle = async (entry) => {
+    await upsertEntry({
+      ...entry,
+      is_complete: false,
+      is_test: false,
+    })
+  }
+
   if (authLoading || (user && familyLoading)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-navy">
@@ -27,12 +39,10 @@ export default function App() {
     )
   }
 
-  // Not signed in
   if (!user) {
     return <Auth onSignIn={signIn} onSignUp={signUp} />
   }
 
-  // Signed in but no family
   if (!family) {
     return <FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} />
   }
@@ -48,14 +58,17 @@ export default function App() {
               week={week}
               weekDates={weekDates}
               dayNumbers={dayNumbers}
-              noSchoolDays={noSchoolDays}
+              globalNoSchool={globalNoSchool}
+              personNoSchool={personNoSchool}
               onDayNumberChange={setDayNumber}
-              onToggleNoSchool={toggleNoSchool}
+              onToggleGlobalNoSchool={toggleGlobalNoSchool}
+              onTogglePersonNoSchool={togglePersonNoSchool}
               entries={entries}
               onPrev={goToPrevWeek}
               onNext={goToNextWeek}
               onToday={goToToday}
               onCellTap={(cell) => setActiveCell(cell)}
+              onAllieToggle={handleAllieToggle}
               getEntry={getEntry}
             />
           )}

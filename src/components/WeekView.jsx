@@ -1,7 +1,11 @@
 import WeekNav from './WeekNav'
 import WeekGrid from './WeekGrid'
 
-export default function WeekView({ week, weekDates, dayNumbers, noSchoolDays, onDayNumberChange, onToggleNoSchool, entries, onPrev, onNext, onToday, onCellTap, getEntry }) {
+export default function WeekView({
+  week, weekDates, dayNumbers, globalNoSchool, personNoSchool,
+  onDayNumberChange, onToggleGlobalNoSchool, onTogglePersonNoSchool,
+  entries, onPrev, onNext, onToday, onCellTap, onAllieToggle, getEntry,
+}) {
   return (
     <div className="pb-20">
       <WeekNav
@@ -15,10 +19,13 @@ export default function WeekView({ week, weekDates, dayNumbers, noSchoolDays, on
         <WeekGrid
           weekDates={weekDates}
           dayNumbers={dayNumbers}
-          noSchoolDays={noSchoolDays}
+          globalNoSchool={globalNoSchool}
+          personNoSchool={personNoSchool}
           onDayNumberChange={onDayNumberChange}
-          onToggleNoSchool={onToggleNoSchool}
+          onToggleGlobalNoSchool={onToggleGlobalNoSchool}
+          onTogglePersonNoSchool={onTogglePersonNoSchool}
           onCellTap={onCellTap}
+          onAllieToggle={onAllieToggle}
           getEntry={getEntry}
         />
       )}

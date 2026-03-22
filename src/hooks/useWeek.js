@@ -24,56 +24,36 @@ function nextDayNum(dn) {
   return (dn % 8) + 1
 }
 
-// Get weekday dates (Mon-Fri) from a full 7-day dates array
 function weekdays(dates) {
   return dates.slice(0, 5)
 }
 
-// Fill day numbers forward from a starting point, skipping no-school days
-function fillForward(startNum, dates, startIndex, noSchool) {
-  const result = {}
-  let current = startNum
-  for (let i = startIndex; i < dates.length; i++) {
-    const date = dates[i]
-    if (noSchool.has(date)) continue // skip no-school days
-    current = i === startIndex ? startNum : nextDayNum(current)
-    // Wait, need to handle first iteration correctly
-    // On the startIndex itself, use startNum directly
-    result[date] = current
-  }
-  return result
-}
-
-// Recalculate all day numbers for weekdays given a manual edit at editDate
-// Preserve everything before editDate, recalculate editDate and forward
-function recalcFromEdit(editDate, editNum, wkDays, noSchool) {
+// Recalc day numbers from editDate forward, skipping global no-school only
+function recalcForward(editDate, editNum, wkDays, globalNoSchool) {
   const result = {}
   const editIdx = wkDays.indexOf(editDate)
   if (editIdx === -1) return result
 
-  // Set the edited day
-  if (!noSchool.has(editDate)) {
+  if (!globalNoSchool.has(editDate)) {
     result[editDate] = editNum
   }
 
-  // Fill forward from the day after editDate
   let lastNum = editNum
   for (let i = editIdx + 1; i < wkDays.length; i++) {
-    if (noSchool.has(wkDays[i])) continue
+    if (globalNoSchool.has(wkDays[i])) continue
     lastNum = nextDayNum(lastNum)
     result[wkDays[i]] = lastNum
   }
-
   return result
 }
 
-// Auto-fill a full week from a starting number (for new weeks / carry-over)
-function autoFillWeek(startNum, wkDays, noSchool) {
+// Auto-fill a full week from a starting number, skipping global no-school
+function autoFillWeek(startNum, wkDays, globalNoSchool) {
   const result = {}
   let current = startNum
   let first = true
   for (const date of wkDays) {
-    if (noSchool.has(date)) continue
+    if (globalNoSchool.has(date)) continue
     if (first) {
       result[date] = current
       first = false
@@ -85,10 +65,10 @@ function autoFillWeek(startNum, wkDays, noSchool) {
   return result
 }
 
-// Find the last school day's day number from a week
-function getLastDayNum(dayNumbers, wkDays, noSchool) {
+// Find the last school day's day number
+function getLastDayNum(dayNumbers, wkDays, globalNoSchool) {
   for (let i = wkDays.length - 1; i >= 0; i--) {
-    if (noSchool.has(wkDays[i])) continue
+    if (globalNoSchool.has(wkDays[i])) continue
     if (dayNumbers[wkDays[i]]) return dayNumbers[wkDays[i]]
   }
   return null
@@ -98,7 +78,8 @@ export function useWeek(familyId) {
   const [week, setWeek] = useState(null)
   const [weekDates, setWeekDates] = useState([])
   const [dayNumbers, setDayNumbersState] = useState({})
-  const [noSchoolDays, setNoSchoolDaysState] = useState([])
+  const [globalNoSchool, setGlobalNoSchoolState] = useState([])
+  const [personNoSchool, setPersonNoSchoolState] = useState({})
   const [loading, setLoading] = useState(true)
   const [currentMonday, setCurrentMonday] = useState(() => getMonday(new Date()))
 
@@ -109,13 +90,11 @@ export function useWeek(familyId) {
     const startDate = formatDate(monday)
     const endDate = formatDate(addDays(monday, 6))
 
-    // Build dates array
     const dates = []
     for (let i = 0; i < 7; i++) {
       dates.push(formatDate(addDays(monday, i)))
     }
 
-    // Try to load existing week
     let { data, error } = await supabase
       .from('weeks')
       .select('*')
@@ -124,12 +103,12 @@ export function useWeek(familyId) {
       .single()
 
     if (error && error.code === 'PGRST116') {
-      // Not found -- look up previous week to carry over day numbers
+      // Carry over from previous week
       const prevMonday = addDays(monday, -7)
       const prevStartDate = formatDate(prevMonday)
       const { data: prevWeek } = await supabase
         .from('weeks')
-        .select('day_numbers, no_school_days, start_date')
+        .select('day_numbers, global_no_school, start_date')
         .eq('family_id', familyId)
         .eq('start_date', prevStartDate)
         .single()
@@ -140,8 +119,8 @@ export function useWeek(familyId) {
         for (let i = 0; i < 7; i++) {
           prevDates.push(formatDate(addDays(prevMonday, i)))
         }
-        const prevNoSchool = new Set(prevWeek.no_school_days || [])
-        const lastNum = getLastDayNum(prevWeek.day_numbers, weekdays(prevDates), prevNoSchool)
+        const prevGlobal = new Set(prevWeek.global_no_school || [])
+        const lastNum = getLastDayNum(prevWeek.day_numbers, weekdays(prevDates), prevGlobal)
         if (lastNum) {
           autoDayNumbers = autoFillWeek(nextDayNum(lastNum), weekdays(dates), new Set())
         }
@@ -154,7 +133,8 @@ export function useWeek(familyId) {
           start_date: startDate,
           end_date: endDate,
           day_numbers: autoDayNumbers,
-          no_school_days: [],
+          global_no_school: [],
+          person_no_school: {},
         })
         .select()
         .single()
@@ -174,7 +154,8 @@ export function useWeek(familyId) {
     setWeek(data)
     setWeekDates(dates)
     setDayNumbersState(data.day_numbers || {})
-    setNoSchoolDaysState(data.no_school_days || [])
+    setGlobalNoSchoolState(data.global_no_school || [])
+    setPersonNoSchoolState(data.person_no_school || {})
     setLoading(false)
   }, [familyId])
 
@@ -182,121 +163,113 @@ export function useWeek(familyId) {
     loadOrCreateWeek(currentMonday)
   }, [currentMonday, loadOrCreateWeek])
 
-  // Save both day_numbers and no_school_days to DB
-  const persistWeek = async (newDayNumbers, newNoSchool) => {
+  const persistWeek = async (updates) => {
     const { error } = await supabase
       .from('weeks')
-      .update({ day_numbers: newDayNumbers, no_school_days: newNoSchool })
+      .update(updates)
       .eq('id', week.id)
     if (error) console.error('Failed to update week:', error)
   }
 
+  // Set a day number and recalc forward (only global no-school skips count)
   const setDayNumber = async (date, num) => {
     const wkDays = weekdays(weekDates)
-    const noSchool = new Set(noSchoolDays)
+    const globalSet = new Set(globalNoSchool)
+    const editIdx = wkDays.indexOf(date)
 
     // Preserve days before the edited date
-    const editIdx = wkDays.indexOf(date)
     const preserved = {}
     for (let i = 0; i < editIdx; i++) {
-      if (dayNumbers[wkDays[i]]) preserved[wkDays[i]] = dayNumbers[wkDays[i]]
+      if (dayNumbers[wkDays[i]] && !globalSet.has(wkDays[i])) {
+        preserved[wkDays[i]] = dayNumbers[wkDays[i]]
+      }
     }
 
     if (num === null) {
-      // Clearing: remove this date's number and recalc forward from previous
       const updated = { ...preserved }
-      // Find the day number right before this date
       let prevNum = null
       for (let i = editIdx - 1; i >= 0; i--) {
-        if (!noSchool.has(wkDays[i]) && preserved[wkDays[i]]) {
+        if (!globalSet.has(wkDays[i]) && preserved[wkDays[i]]) {
           prevNum = preserved[wkDays[i]]
           break
         }
       }
-      if (prevNum) {
-        const forwardFill = recalcFromEdit(wkDays[editIdx + 1], nextDayNum(prevNum), wkDays.slice(editIdx + 1), noSchool)
-        // Remap keys since recalcFromEdit uses the slice
-        for (let i = editIdx + 1; i < wkDays.length; i++) {
-          if (noSchool.has(wkDays[i])) continue
-          if (forwardFill[wkDays[i]]) updated[wkDays[i]] = forwardFill[wkDays[i]]
-        }
+      if (prevNum && editIdx + 1 < wkDays.length) {
+        const forward = recalcForward(wkDays[editIdx + 1], nextDayNum(prevNum), wkDays, globalSet)
+        Object.assign(updated, forward)
       }
       setDayNumbersState(updated)
-      await persistWeek(updated, noSchoolDays)
+      await persistWeek({ day_numbers: updated })
     } else {
-      // Setting a number: recalc this date and everything after
-      const forward = recalcFromEdit(date, num, wkDays, noSchool)
+      const forward = recalcForward(date, num, wkDays, globalSet)
       const updated = { ...preserved, ...forward }
       setDayNumbersState(updated)
-      await persistWeek(updated, noSchoolDays)
+      await persistWeek({ day_numbers: updated })
     }
   }
 
-  const toggleNoSchool = async (date) => {
+  // Toggle global no-school for a date (affects day number count)
+  const toggleGlobalNoSchool = async (date) => {
     const wkDays = weekdays(weekDates)
-    const isCurrentlyNoSchool = noSchoolDays.includes(date)
-    let newNoSchool
+    const isCurrently = globalNoSchool.includes(date)
+    const newGlobal = isCurrently
+      ? globalNoSchool.filter(d => d !== date)
+      : [...globalNoSchool, date]
+    const globalSet = new Set(newGlobal)
 
-    if (isCurrentlyNoSchool) {
-      // Remove from no-school
-      newNoSchool = noSchoolDays.filter(d => d !== date)
-    } else {
-      // Add to no-school
-      newNoSchool = [...noSchoolDays, date]
-    }
-
-    const noSchoolSet = new Set(newNoSchool)
-
-    // Find the first school day with a day number before or at this date to recalc from
+    // Recalc day numbers: find first anchor before or at this date
     const dateIdx = wkDays.indexOf(date)
     let anchorNum = null
     let anchorIdx = -1
-    for (let i = dateIdx - 1; i >= 0; i--) {
-      if (!noSchoolSet.has(wkDays[i]) && dayNumbers[wkDays[i]]) {
+    for (let i = 0; i < wkDays.length; i++) {
+      if (globalSet.has(wkDays[i])) continue
+      if (dayNumbers[wkDays[i]] && i <= dateIdx) {
+        // Use the latest anchor at or before dateIdx
         anchorNum = dayNumbers[wkDays[i]]
         anchorIdx = i
-        break
       }
     }
-
-    // Rebuild day numbers: preserve everything before anchor, recalc from anchor forward
-    const updated = {}
-
-    if (anchorIdx >= 0) {
-      // Preserve up to and including anchor
-      for (let i = 0; i <= anchorIdx; i++) {
-        if (dayNumbers[wkDays[i]] && !noSchoolSet.has(wkDays[i])) {
-          updated[wkDays[i]] = dayNumbers[wkDays[i]]
-        }
-      }
-      // Fill forward from anchor
-      let current = anchorNum
-      for (let i = anchorIdx + 1; i < wkDays.length; i++) {
-        if (noSchoolSet.has(wkDays[i])) continue
-        current = nextDayNum(current)
-        updated[wkDays[i]] = current
-      }
-    } else if (dateIdx === 0 || !Object.keys(dayNumbers).length) {
-      // No anchor found and editing first day or empty -- check if there's a number after
+    // If no anchor before, look for first anchor after
+    if (anchorIdx === -1) {
       for (let i = 0; i < wkDays.length; i++) {
-        if (noSchoolSet.has(wkDays[i])) continue
+        if (globalSet.has(wkDays[i])) continue
         if (dayNumbers[wkDays[i]]) {
-          // Found a number after, use it as anchor
-          updated[wkDays[i]] = dayNumbers[wkDays[i]]
-          let current = dayNumbers[wkDays[i]]
-          for (let j = i + 1; j < wkDays.length; j++) {
-            if (noSchoolSet.has(wkDays[j])) continue
-            current = nextDayNum(current)
-            updated[wkDays[j]] = current
-          }
+          anchorNum = dayNumbers[wkDays[i]]
+          anchorIdx = i
           break
         }
       }
     }
 
-    setNoSchoolDaysState(newNoSchool)
+    let updated = {}
+    if (anchorIdx >= 0) {
+      // Preserve everything up to anchor, then fill forward
+      for (let i = 0; i < anchorIdx; i++) {
+        if (dayNumbers[wkDays[i]] && !globalSet.has(wkDays[i])) {
+          updated[wkDays[i]] = dayNumbers[wkDays[i]]
+        }
+      }
+      const forward = recalcForward(wkDays[anchorIdx], anchorNum, wkDays, globalSet)
+      Object.assign(updated, forward)
+    }
+
+    setGlobalNoSchoolState(newGlobal)
     setDayNumbersState(updated)
-    await persistWeek(updated, newNoSchool)
+    await persistWeek({ global_no_school: newGlobal, day_numbers: updated })
+  }
+
+  // Toggle per-person no-school for a specific person+date
+  const togglePersonNoSchool = async (person, date) => {
+    const current = personNoSchool[person] || []
+    const isCurrently = current.includes(date)
+    const updated = {
+      ...personNoSchool,
+      [person]: isCurrently
+        ? current.filter(d => d !== date)
+        : [...current, date],
+    }
+    setPersonNoSchoolState(updated)
+    await persistWeek({ person_no_school: updated })
   }
 
   const goToPrevWeek = () => setCurrentMonday(prev => addDays(prev, -7))
@@ -304,8 +277,8 @@ export function useWeek(familyId) {
   const goToToday = () => setCurrentMonday(getMonday(new Date()))
 
   return {
-    week, weekDates, dayNumbers, noSchoolDays, loading,
+    week, weekDates, dayNumbers, globalNoSchool, personNoSchool, loading,
     goToPrevWeek, goToNextWeek, goToToday,
-    setDayNumber, toggleNoSchool,
+    setDayNumber, toggleGlobalNoSchool, togglePersonNoSchool,
   }
 }
