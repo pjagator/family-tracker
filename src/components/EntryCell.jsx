@@ -10,7 +10,7 @@ export default function EntryCell({ entry, date, isToday, isWeekend, onTap }) {
       {hasContent ? (
         <span
           className={`text-[13px] leading-tight block ${
-            entry.is_complete ? 'line-through text-gray-400' : 'text-gray-800'
+            entry.is_complete ? 'line-through text-gray-400' : entry._isPlaceholder ? 'text-gray-400 italic' : 'text-gray-800'
           }`}
         >
           {entry.is_test && (

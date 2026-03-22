@@ -1,10 +1,7 @@
 import WeekNav from './WeekNav'
-import PersonSection from './PersonSection'
-import BeauGrid from './BeauGrid'
+import WeekGrid from './WeekGrid'
 
 export default function WeekView({ week, weekDates, entries, onPrev, onNext, onToday, onCellTap, getEntry }) {
-  const today = new Date().toISOString().split('T')[0]
-
   return (
     <div className="pb-20">
       <WeekNav
@@ -15,14 +12,11 @@ export default function WeekView({ week, weekDates, entries, onPrev, onNext, onT
       />
 
       {weekDates.length > 0 && (
-        <PersonSection name="Beau" defaultOpen>
-          <BeauGrid
-            weekDates={weekDates}
-            today={today}
-            onCellTap={onCellTap}
-            getEntry={getEntry}
-          />
-        </PersonSection>
+        <WeekGrid
+          weekDates={weekDates}
+          onCellTap={onCellTap}
+          getEntry={getEntry}
+        />
       )}
     </div>
   )
