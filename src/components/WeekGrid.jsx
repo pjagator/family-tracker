@@ -10,9 +10,12 @@ const SPECIALS_ROTATION = {
   4: 'Spanish',
   5: 'Library Research',
   6: 'Art & PE',
-  7: '(varies)',
-  8: '(varies)',
 }
+
+// Beau: which subjects meet on odd vs even days
+const BEAU_ODD_DAYS = new Set(['math', 'religion'])   // days 1,3,5,7
+const BEAU_EVEN_DAYS = new Set(['science', 'ss', 'spanish']) // days 2,4,6,8
+const BEAU_ALL_DAYS = new Set(['ela', 'activities'])   // always show
 
 const PEOPLE = [
   {
@@ -75,7 +78,18 @@ const PEOPLE = [
 
 const GRID_COLS = '90px repeat(7, 1fr)'
 
-export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
+function isOddDay(dn) { return dn === 1 || dn === 3 || dn === 5 || dn === 7 }
+function isEvenDay(dn) { return dn === 2 || dn === 4 || dn === 6 || dn === 8 }
+
+function beauRowMeetsOnDay(catKey, dayNum) {
+  if (!dayNum) return true // no day number set, show all
+  if (BEAU_ALL_DAYS.has(catKey)) return true
+  if (BEAU_ODD_DAYS.has(catKey)) return isOddDay(dayNum)
+  if (BEAU_EVEN_DAYS.has(catKey)) return isEvenDay(dayNum)
+  return true
+}
+
+export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onCellTap, getEntry }) {
   const today = new Date().toISOString().split('T')[0]
 
   const [openSections, setOpenSections] = useState(() => {
@@ -84,17 +98,35 @@ export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
     return init
   })
 
+  const [pickerDate, setPickerDate] = useState(null)
+
   const toggleSection = (personKey) => {
     setOpenSections(prev => ({ ...prev, [personKey]: !prev[personKey] }))
   }
 
+  const getLuciaSpecials = (date) => {
+    const dn = dayNumbers[date]
+    if (!dn) return null
+    return SPECIALS_ROTATION[dn] || null // days 7,8 return null (user fills in)
+  }
+
   const getDisplayEntry = (person, category, date) => {
     const entry = getEntry(person, category, date)
-    if (person === 'lucia' && category === 'specials' && entry?.day_number && !entry?.content) {
-      const placeholder = SPECIALS_ROTATION[entry.day_number]
-      if (placeholder) return { ...entry, content: placeholder, _isPlaceholder: true }
+    // Lucia specials auto-text from day number
+    if (person === 'lucia' && category === 'specials') {
+      const autoText = getLuciaSpecials(date)
+      if (autoText && !entry?.content) {
+        return { ...(entry || {}), content: autoText, _isPlaceholder: true }
+      }
     }
     return entry
+  }
+
+  const handlePickerSelect = (num) => {
+    if (pickerDate) {
+      onDayNumberChange(pickerDate, num)
+      setPickerDate(null)
+    }
   }
 
   return (
@@ -103,24 +135,69 @@ export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
 
         {/* Shared sticky date header */}
         <div className="grid sticky top-0 z-20" style={{ gridTemplateColumns: GRID_COLS }}>
-          <div className="bg-gray-100 border border-[#e2e8f0] p-1.5 sticky left-0 z-20" />
+          <div className="bg-gray-100 border border-[#e2e8f0] p-1.5 sticky left-0 z-20 text-[10px] text-slate text-center">
+            Day #
+          </div>
           {weekDates.map((date, i) => {
             const d = new Date(date + 'T00:00:00')
             const isToday = date === today
             const isWeekend = i >= 5
+            const dn = dayNumbers[date]
             return (
               <div
                 key={date}
-                className={`border border-l-0 border-[#e2e8f0] p-1.5 text-center text-[11px] font-semibold ${
+                className={`border border-l-0 border-[#e2e8f0] p-1 text-center text-[11px] font-semibold relative ${
                   isToday ? 'bg-today text-navy' : isWeekend ? 'bg-weekend text-slate' : 'bg-gray-100 text-slate'
                 }`}
               >
                 <div>{DAY_ABBRS[i]}</div>
-                <div>{d.getMonth() + 1}/{d.getDate()}</div>
+                <div className="text-[10px]">{d.getMonth() + 1}/{d.getDate()}</div>
+                {!isWeekend && (
+                  <button
+                    onClick={(e) => { e.stopPropagation(); setPickerDate(pickerDate === date ? null : date) }}
+                    className={`mt-0.5 text-[10px] font-bold rounded px-1.5 py-0.5 transition ${
+                      dn ? 'bg-navy text-white' : 'bg-gray-200 text-gray-400'
+                    }`}
+                  >
+                    {dn ? `D${dn}` : '--'}
+                  </button>
+                )}
+
+                {/* Day number picker dropdown */}
+                {pickerDate === date && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 grid grid-cols-4 gap-0.5 p-1.5 w-[120px]">
+                    {[1,2,3,4,5,6,7,8].map(n => (
+                      <button
+                        key={n}
+                        onClick={() => handlePickerSelect(n)}
+                        className={`text-[12px] font-semibold py-1.5 rounded transition ${
+                          dayNumbers[date] === n
+                            ? 'bg-navy text-white'
+                            : 'bg-gray-50 text-gray-700 active:bg-gray-200'
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                    {dn && (
+                      <button
+                        onClick={() => handlePickerSelect(null)}
+                        className="col-span-4 text-[11px] text-slate py-1 mt-0.5 active:bg-gray-100 rounded"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
             )
           })}
         </div>
+
+        {/* Click outside to close picker */}
+        {pickerDate && (
+          <div className="fixed inset-0 z-10" onClick={() => setPickerDate(null)} />
+        )}
 
         {/* Person sections */}
         {PEOPLE.map((person, personIdx) => (
@@ -141,29 +218,47 @@ export default function WeekGrid({ weekDates, onCellTap, getEntry }) {
             {/* Category rows */}
             {openSections[person.key] && (
               <div className="grid" style={{ gridTemplateColumns: GRID_COLS }}>
-                {person.rows.map(({ key: cat, label }) => (
-                  <div key={cat} className="contents">
-                    <div className="bg-gray-50 border border-t-0 border-[#e2e8f0] p-1.5 text-[12px] font-medium text-gray-600 sticky left-0 z-10 flex items-center">
-                      {label}
+                {person.rows.map(({ key: cat, label }) => {
+                  // For Beau: check if any weekday has a day number set
+                  const beauHasDayNumbers = person.key === 'beau' &&
+                    weekDates.slice(0, 5).some(d => dayNumbers[d])
+
+                  // If Beau has day numbers and this row doesn't meet on ANY day this week, hide it
+                  if (person.key === 'beau' && beauHasDayNumbers && !BEAU_ALL_DAYS.has(cat)) {
+                    const meetsAnyDay = weekDates.slice(0, 5).some(d => beauRowMeetsOnDay(cat, dayNumbers[d]))
+                    if (!meetsAnyDay) return null
+                  }
+
+                  return (
+                    <div key={cat} className="contents">
+                      <div className="bg-gray-50 border border-t-0 border-[#e2e8f0] p-1.5 text-[12px] font-medium text-gray-600 sticky left-0 z-10 flex items-center">
+                        {label}
+                      </div>
+                      {weekDates.map((date, i) => {
+                        const entry = getDisplayEntry(person.key, cat, date)
+                        const rawEntry = getEntry(person.key, cat, date)
+                        const isToday = date === today
+                        const isWeekend = i >= 5
+                        const dn = dayNumbers[date]
+
+                        // Dim Beau cells on days the subject doesn't meet
+                        const dimmed = person.key === 'beau' && dn && !beauRowMeetsOnDay(cat, dn)
+
+                        return (
+                          <EntryCell
+                            key={date}
+                            entry={entry}
+                            date={date}
+                            isToday={isToday}
+                            isWeekend={isWeekend}
+                            dimmed={dimmed}
+                            onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry })}
+                          />
+                        )
+                      })}
                     </div>
-                    {weekDates.map((date, i) => {
-                      const entry = getDisplayEntry(person.key, cat, date)
-                      const rawEntry = getEntry(person.key, cat, date)
-                      const isToday = date === today
-                      const isWeekend = i >= 5
-                      return (
-                        <EntryCell
-                          key={date}
-                          entry={entry}
-                          date={date}
-                          isToday={isToday}
-                          isWeekend={isWeekend}
-                          onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry })}
-                        />
-                      )
-                    })}
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
