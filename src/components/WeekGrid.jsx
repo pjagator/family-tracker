@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import EntryCell from './EntryCell'
+import WeatherRow from './WeatherRow'
 
 const DAY_ABBRS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -244,6 +245,9 @@ export default function WeekGrid({
             )
           })}
         </div>
+
+        {/* Weather row */}
+        <WeatherRow weekDates={weekDates} />
 
         {/* Click outside to close picker */}
         {pickerDate && (
