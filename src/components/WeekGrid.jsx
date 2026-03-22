@@ -162,9 +162,10 @@ export default function WeekGrid({
 
   return (
     <div>
-      <div className="sticky top-0 z-20 overflow-x-auto bg-white">
-        <div className="min-w-[600px]">
-        {/* Date header */}
+      <div className="min-w-[600px]">
+
+        {/* Sticky header: date row + weather */}
+        <div className="sticky top-0 z-20 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
         <div className="grid" style={{ gridTemplateColumns: GRID_COLS }}>
           <div className="bg-gray-100 border border-[#e2e8f0] p-1.5 sticky left-0 z-20 text-[10px] text-slate text-center">
             Day #
@@ -248,11 +249,8 @@ export default function WeekGrid({
 
         {/* Weather row */}
         <WeatherRow weekDates={weekDates} />
-        </div>{/* end min-w */}
-      </div>{/* end sticky header block */}
+        </div>{/* end sticky header */}
 
-      <div className="overflow-x-auto">
-      <div className="min-w-[600px]">
         {/* Click outside to close picker */}
         {pickerDate && (
           <div className="fixed inset-0 z-10" onClick={() => setPickerDate(null)} />
@@ -414,8 +412,7 @@ export default function WeekGrid({
             </div>
           )
         })}
-      </div>{/* end min-w */}
-      </div>{/* end overflow-x-auto */}
+      </div>
     </div>
   )
 }
