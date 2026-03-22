@@ -12,7 +12,7 @@ import BottomNav from './components/BottomNav'
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut } = useAuth()
   const { family, loading: familyLoading, createFamily, joinFamily } = useFamily(user?.id)
-  const { week, weekDates, dayNumbers, loading: weekLoading, goToPrevWeek, goToNextWeek, goToToday, setDayNumber } = useWeek(family?.id)
+  const { week, weekDates, dayNumbers, noSchoolDays, loading: weekLoading, goToPrevWeek, goToNextWeek, goToToday, setDayNumber, toggleNoSchool } = useWeek(family?.id)
   const { entries, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
 
   const [activeTab, setActiveTab] = useState('week')
@@ -48,7 +48,9 @@ export default function App() {
               week={week}
               weekDates={weekDates}
               dayNumbers={dayNumbers}
+              noSchoolDays={noSchoolDays}
               onDayNumberChange={setDayNumber}
+              onToggleNoSchool={toggleNoSchool}
               entries={entries}
               onPrev={goToPrevWeek}
               onNext={goToNextWeek}

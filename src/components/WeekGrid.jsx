@@ -82,15 +82,16 @@ function isOddDay(dn) { return dn === 1 || dn === 3 || dn === 5 || dn === 7 }
 function isEvenDay(dn) { return dn === 2 || dn === 4 || dn === 6 || dn === 8 }
 
 function beauRowMeetsOnDay(catKey, dayNum) {
-  if (!dayNum) return true // no day number set, show all
+  if (!dayNum) return true
   if (BEAU_ALL_DAYS.has(catKey)) return true
   if (BEAU_ODD_DAYS.has(catKey)) return isOddDay(dayNum)
   if (BEAU_EVEN_DAYS.has(catKey)) return isEvenDay(dayNum)
   return true
 }
 
-export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onCellTap, getEntry }) {
+export default function WeekGrid({ weekDates, dayNumbers, noSchoolDays, onDayNumberChange, onToggleNoSchool, onCellTap, getEntry }) {
   const today = new Date().toISOString().split('T')[0]
+  const noSchoolSet = new Set(noSchoolDays || [])
 
   const [openSections, setOpenSections] = useState(() => {
     const init = {}
@@ -105,14 +106,14 @@ export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onC
   }
 
   const getLuciaSpecials = (date) => {
+    if (noSchoolSet.has(date)) return null
     const dn = dayNumbers[date]
     if (!dn) return null
-    return SPECIALS_ROTATION[dn] || null // days 7,8 return null (user fills in)
+    return SPECIALS_ROTATION[dn] || null
   }
 
   const getDisplayEntry = (person, category, date) => {
     const entry = getEntry(person, category, date)
-    // Lucia specials auto-text from day number
     if (person === 'lucia' && category === 'specials') {
       const autoText = getLuciaSpecials(date)
       if (autoText && !entry?.content) {
@@ -125,6 +126,13 @@ export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onC
   const handlePickerSelect = (num) => {
     if (pickerDate) {
       onDayNumberChange(pickerDate, num)
+      setPickerDate(null)
+    }
+  }
+
+  const handleToggleNoSchool = () => {
+    if (pickerDate) {
+      onToggleNoSchool(pickerDate)
       setPickerDate(null)
     }
   }
@@ -143,11 +151,15 @@ export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onC
             const isToday = date === today
             const isWeekend = i >= 5
             const dn = dayNumbers[date]
+            const isNoSchool = noSchoolSet.has(date)
             return (
               <div
                 key={date}
                 className={`border border-l-0 border-[#e2e8f0] p-1 text-center text-[11px] font-semibold relative ${
-                  isToday ? 'bg-today text-navy' : isWeekend ? 'bg-weekend text-slate' : 'bg-gray-100 text-slate'
+                  isNoSchool ? 'bg-red-50 text-red-400'
+                  : isToday ? 'bg-today text-navy'
+                  : isWeekend ? 'bg-weekend text-slate'
+                  : 'bg-gray-100 text-slate'
                 }`}
               >
                 <div>{DAY_ABBRS[i]}</div>
@@ -156,33 +168,47 @@ export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onC
                   <button
                     onClick={(e) => { e.stopPropagation(); setPickerDate(pickerDate === date ? null : date) }}
                     className={`mt-0.5 text-[10px] font-bold rounded px-1.5 py-0.5 transition ${
-                      dn ? 'bg-navy text-white' : 'bg-gray-200 text-gray-400'
+                      isNoSchool ? 'bg-red-200 text-red-600'
+                      : dn ? 'bg-navy text-white'
+                      : 'bg-gray-200 text-gray-400'
                     }`}
                   >
-                    {dn ? `D${dn}` : '--'}
+                    {isNoSchool ? 'OFF' : dn ? `D${dn}` : '--'}
                   </button>
                 )}
 
                 {/* Day number picker dropdown */}
                 {pickerDate === date && (
-                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 grid grid-cols-4 gap-0.5 p-1.5 w-[120px]">
-                    {[1,2,3,4,5,6,7,8].map(n => (
-                      <button
-                        key={n}
-                        onClick={() => handlePickerSelect(n)}
-                        className={`text-[12px] font-semibold py-1.5 rounded transition ${
-                          dayNumbers[date] === n
-                            ? 'bg-navy text-white'
-                            : 'bg-gray-50 text-gray-700 active:bg-gray-200'
-                        }`}
-                      >
-                        {n}
-                      </button>
-                    ))}
-                    {dn && (
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 mt-1 bg-white rounded-lg shadow-lg border border-gray-200 z-50 p-1.5 w-[130px]">
+                    <div className="grid grid-cols-4 gap-0.5">
+                      {[1,2,3,4,5,6,7,8].map(n => (
+                        <button
+                          key={n}
+                          onClick={() => handlePickerSelect(n)}
+                          className={`text-[12px] font-semibold py-1.5 rounded transition ${
+                            !isNoSchool && dayNumbers[date] === n
+                              ? 'bg-navy text-white'
+                              : 'bg-gray-50 text-gray-700 active:bg-gray-200'
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                    <button
+                      onClick={handleToggleNoSchool}
+                      className={`w-full text-[11px] font-medium py-1.5 mt-1 rounded transition ${
+                        isNoSchool
+                          ? 'bg-red-100 text-red-600'
+                          : 'bg-gray-50 text-gray-500 active:bg-gray-200'
+                      }`}
+                    >
+                      {isNoSchool ? 'Remove No School' : 'No School'}
+                    </button>
+                    {dn && !isNoSchool && (
                       <button
                         onClick={() => handlePickerSelect(null)}
-                        className="col-span-4 text-[11px] text-slate py-1 mt-0.5 active:bg-gray-100 rounded"
+                        className="w-full text-[11px] text-slate py-1 mt-0.5 active:bg-gray-100 rounded"
                       >
                         Clear
                       </button>
@@ -219,13 +245,13 @@ export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onC
             {openSections[person.key] && (
               <div className="grid" style={{ gridTemplateColumns: GRID_COLS }}>
                 {person.rows.map(({ key: cat, label }) => {
-                  // For Beau: check if any weekday has a day number set
                   const beauHasDayNumbers = person.key === 'beau' &&
                     weekDates.slice(0, 5).some(d => dayNumbers[d])
 
-                  // If Beau has day numbers and this row doesn't meet on ANY day this week, hide it
                   if (person.key === 'beau' && beauHasDayNumbers && !BEAU_ALL_DAYS.has(cat)) {
-                    const meetsAnyDay = weekDates.slice(0, 5).some(d => beauRowMeetsOnDay(cat, dayNumbers[d]))
+                    const meetsAnyDay = weekDates.slice(0, 5).some(d =>
+                      !noSchoolSet.has(d) && beauRowMeetsOnDay(cat, dayNumbers[d])
+                    )
                     if (!meetsAnyDay) return null
                   }
 
@@ -240,9 +266,12 @@ export default function WeekGrid({ weekDates, dayNumbers, onDayNumberChange, onC
                         const isToday = date === today
                         const isWeekend = i >= 5
                         const dn = dayNumbers[date]
+                        const isNoSchool = noSchoolSet.has(date)
 
-                        // Dim Beau cells on days the subject doesn't meet
-                        const dimmed = person.key === 'beau' && dn && !beauRowMeetsOnDay(cat, dn)
+                        // Dim Beau cells on days the subject doesn't meet or no school
+                        const dimmed = (person.key === 'beau' && dn && !beauRowMeetsOnDay(cat, dn)) ||
+                          (person.key === 'beau' && isNoSchool && !BEAU_ALL_DAYS.has(cat)) ||
+                          (person.key === 'lucia' && isNoSchool && cat !== 'activities')
 
                         return (
                           <EntryCell
