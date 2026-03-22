@@ -362,14 +362,12 @@ export default function WeekGrid({
                           const dn = dayNumbers[date]
                           const off = isPersonOff(person.key, date)
 
-                          // Dim: Beau subject doesn't meet, or person is off (global or personal) for school rows
+                          // Dim: person is out, or Beau subject doesn't meet on this day
                           let dimmed = false
-                          if (person.key === 'beau' && cat !== 'activities') {
-                            dimmed = off || (dn && !beauRowMeetsOnDay(cat, dn))
-                          } else if (person.key === 'lucia' && cat !== 'activities') {
-                            dimmed = off
-                          } else if (person.key === 'niva' && cat === 'activities') {
-                            dimmed = off
+                          if (off) {
+                            dimmed = true
+                          } else if (person.key === 'beau' && dn && !BEAU_ALL_DAYS.has(cat) && !beauRowMeetsOnDay(cat, dn)) {
+                            dimmed = true
                           }
 
                           // Show "No School" text for children on global off days
