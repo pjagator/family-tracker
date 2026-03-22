@@ -8,7 +8,7 @@ export default function WeekNav({ weekDates, onPrev, onNext, onToday }) {
   const year = start.getFullYear()
 
   return (
-    <div className="sticky top-0 z-30 bg-navy text-white px-4 py-3 flex items-center justify-between">
+    <div className="bg-navy text-white px-4 py-3 flex items-center justify-between">
       <button onClick={onPrev} className="p-2 -ml-2 active:opacity-60 text-lg">&larr;</button>
       <div className="text-center">
         <div className="text-base font-bold">{fmt(start)} &ndash; {fmt(end)}, {year}</div>

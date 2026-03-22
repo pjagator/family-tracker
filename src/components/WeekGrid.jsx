@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import EntryCell from './EntryCell'
 import WeatherRow from './WeatherRow'
+import WeekNav from './WeekNav'
 
 const DAY_ABBRS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
 
@@ -96,6 +97,7 @@ export default function WeekGrid({
   weekDates, dayNumbers, globalNoSchool, personNoSchool,
   onDayNumberChange, onToggleGlobalNoSchool, onTogglePersonNoSchool,
   onCellTap, onAllieToggle, getEntry,
+  onPrev, onNext, onToday,
 }) {
   const today = new Date().toISOString().split('T')[0]
   const globalSet = new Set(globalNoSchool || [])
@@ -164,8 +166,9 @@ export default function WeekGrid({
     <div>
       <div className="min-w-[600px]">
 
-        {/* Sticky header: date row + weather */}
+        {/* Sticky header: week nav + date row + weather */}
         <div className="sticky top-0 z-20 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
+        <WeekNav weekDates={weekDates} onPrev={onPrev} onNext={onNext} onToday={onToday} />
         <div className="grid" style={{ gridTemplateColumns: GRID_COLS }}>
           <div className="bg-gray-100 border border-[#e2e8f0] p-1.5 sticky left-0 z-20 text-[10px] text-slate text-center">
             Day #

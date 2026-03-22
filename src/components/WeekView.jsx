@@ -1,4 +1,3 @@
-import WeekNav from './WeekNav'
 import WeekGrid from './WeekGrid'
 import WordList from './WordList'
 import { useSwipe } from '../hooks/useSwipe'
@@ -16,13 +15,6 @@ export default function WeekView({
 
   return (
     <div className="pb-20" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-      <WeekNav
-        weekDates={weekDates}
-        onPrev={onPrev}
-        onNext={onNext}
-        onToday={onToday}
-      />
-
       {weekDates.length > 0 && (
         <>
           <WeekGrid
@@ -36,6 +28,9 @@ export default function WeekView({
             onCellTap={onCellTap}
             onAllieToggle={onAllieToggle}
             getEntry={getEntry}
+            onPrev={onPrev}
+            onNext={onNext}
+            onToday={onToday}
           />
 
           {/* Lucia's weekly words */}
