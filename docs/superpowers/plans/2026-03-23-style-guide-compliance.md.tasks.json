@@ -1,0 +1,13 @@
+{
+  "planPath": "docs/superpowers/plans/2026-03-23-style-guide-compliance.md",
+  "tasks": [
+    {"id": 4, "subject": "Task 1: Toast System", "status": "pending"},
+    {"id": 5, "subject": "Task 2: Swipe-to-Dismiss on EntrySheet", "status": "pending", "blockedBy": [4]},
+    {"id": 6, "subject": "Task 3: Transitions, User-Select, Contrast", "status": "pending", "blockedBy": [4]},
+    {"id": 7, "subject": "Task 4: Typography and Spacing", "status": "pending", "blockedBy": [6]},
+    {"id": 8, "subject": "Task 5: Empty States, Loading Polish, Animations", "status": "pending", "blockedBy": [7]},
+    {"id": 9, "subject": "Task 6: Touch Targets and Style Guide Update", "status": "pending", "blockedBy": [8]},
+    {"id": 11, "subject": "Task 7: Fix Recurring Items", "status": "pending"}
+  ],
+  "lastUpdated": "2026-03-23T00:00:00Z"
+}
