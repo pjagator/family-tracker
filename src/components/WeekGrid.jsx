@@ -475,7 +475,7 @@ export default function WeekGrid({
                                 isWeekend={isWeekend}
                                 dimmed={cat !== (person.key === 'beau' ? 'activities' : person.rows[0].key)}
                                 rowBgClass={rowBgClass}
-                                onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry })}
+                                onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry, dimmed: cat !== (person.key === 'beau' ? 'activities' : person.rows[0].key) })}
                               />
                             )
                           }
@@ -489,7 +489,7 @@ export default function WeekGrid({
                               isWeekend={isWeekend}
                               dimmed={dimmed}
                               rowBgClass={rowBgClass}
-                              onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry })}
+                              onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry, dimmed })}
                             />
                           )
                         })}

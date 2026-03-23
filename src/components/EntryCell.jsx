@@ -2,7 +2,7 @@ export default function EntryCell({ entry, date, isToday, isWeekend, dimmed, onT
   const hasContent = entry && entry.content
 
   // Background: dimmed > today > weekend > alternating row bg > white
-  let bg = dimmed ? 'bg-dimmed'
+  let bg = dimmed ? 'bg-slate-100'
     : isToday ? 'bg-today'
     : isWeekend ? 'bg-weekend'
     : rowBgClass || 'bg-white'
@@ -19,10 +19,8 @@ export default function EntryCell({ entry, date, isToday, isWeekend, dimmed, onT
 
   return (
     <button
-      onClick={dimmed ? undefined : onTap}
-      className={`${bg} border border-slate-300 p-1.5 text-left min-h-[44px] w-full transition-colors relative ${leftBorder} ${
-        dimmed ? 'cursor-default opacity-40' : 'active:bg-indigo-50 active:scale-[0.97]'
-      }`}
+      onClick={onTap}
+      className={`${bg} border border-slate-300 p-1.5 text-left min-h-[44px] w-full transition-colors relative ${leftBorder} active:bg-indigo-50 active:scale-[0.97]`}
     >
       {hasContent ? (
         <span
@@ -45,9 +43,7 @@ export default function EntryCell({ entry, date, isToday, isWeekend, dimmed, onT
           {entry.content.length > 30 ? entry.content.slice(0, 30) + '…' : entry.content}
         </span>
       ) : (
-        dimmed
-          ? <span className="text-[11px] text-gray-300">—</span>
-          : <span className="text-[16px] text-gray-300 opacity-30">+</span>
+        <span className={`text-[16px] text-gray-300 ${dimmed ? 'opacity-20' : 'opacity-30'}`}>+</span>
       )}
     </button>
   )

@@ -75,6 +75,11 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
             <button onClick={onClose} className="text-slate text-xl p-1">&times;</button>
           </div>
 
+          {/* Dimmed cell hint */}
+          {cell.dimmed && !cell.entry?.content && (
+            <div className="text-[11px] text-gray-400 italic mb-2">This subject doesn't normally meet on this day</div>
+          )}
+
           {/* Content input */}
           <textarea
             ref={inputRef}
