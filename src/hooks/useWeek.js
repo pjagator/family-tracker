@@ -156,8 +156,14 @@ export function useWeek(familyId) {
       if (recurring?.length) {
         const autoEntries = []
         for (const item of recurring) {
+          const effectiveStart = item.start_date || (item.created_at ? item.created_at.split('T')[0] : '2000-01-01')
+          const effectiveEnd = item.end_date || '9999-12-31'
           // Find the date in this week that matches the day_of_week
-          const matchDate = dates.find(d => new Date(d + 'T00:00:00').getDay() === item.day_of_week)
+          const matchDate = dates.find(d =>
+            new Date(d + 'T00:00:00').getDay() === item.day_of_week
+            && d >= effectiveStart
+            && d <= effectiveEnd
+          )
           if (matchDate) {
             autoEntries.push({
               family_id: familyId,
@@ -178,6 +184,52 @@ export function useWeek(familyId) {
       console.error('Failed to load week:', error)
       setLoading(false)
       return
+    } else {
+      // Auto-populate recurring for existing weeks (today + future dates only)
+      const today = formatDate(new Date())
+      const { data: recurring } = await supabase
+        .from('recurring')
+        .select('*')
+        .eq('family_id', familyId)
+        .eq('is_active', true)
+
+      if (recurring?.length) {
+        // Get existing entries for this week to avoid duplicates
+        const { data: existingEntries } = await supabase
+          .from('entries')
+          .select('person, category, date')
+          .eq('week_id', data.id)
+
+        const existingSet = new Set(
+          (existingEntries || []).map(e => `${e.person}|${e.category}|${e.date}`)
+        )
+
+        const autoEntries = []
+        for (const item of recurring) {
+          const effectiveStart = item.start_date || (item.created_at ? item.created_at.split('T')[0] : '2000-01-01')
+          const effectiveEnd = item.end_date || '9999-12-31'
+
+          const matchDate = dates.find(d =>
+            new Date(d + 'T00:00:00').getDay() === item.day_of_week
+            && d >= today
+            && d >= effectiveStart
+            && d <= effectiveEnd
+          )
+          if (matchDate && !existingSet.has(`${item.person}|${item.category}|${matchDate}`)) {
+            autoEntries.push({
+              family_id: familyId,
+              week_id: data.id,
+              date: matchDate,
+              person: item.person,
+              category: item.category,
+              content: item.content,
+            })
+          }
+        }
+        if (autoEntries.length) {
+          await supabase.from('entries').insert(autoEntries)
+        }
+      }
     }
 
     setWeek(data)

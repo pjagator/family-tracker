@@ -19,6 +19,8 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
   const [dayOfWeek, setDayOfWeek] = useState(1)
   const [content, setContent] = useState('')
   const [saving, setSaving] = useState(false)
+  const [startDate, setStartDate] = useState(() => new Date().toISOString().split('T')[0])
+  const [endDate, setEndDate] = useState('')
 
   const handlePersonChange = (p) => {
     setPerson(p)
@@ -29,8 +31,14 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
     e.preventDefault()
     if (!content.trim()) return
     setSaving(true)
-    await onAdd({ person, category, day_of_week: dayOfWeek, content: content.trim() })
+    await onAdd({
+      person, category, day_of_week: dayOfWeek, content: content.trim(),
+      start_date: startDate || null,
+      end_date: endDate || null,
+    })
     setContent('')
+    setStartDate(new Date().toISOString().split('T')[0])
+    setEndDate('')
     setSaving(false)
     setShowForm(false)
     showToast({ message: 'Recurring item added', type: 'success' })
@@ -101,6 +109,26 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
               required
             />
           </div>
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <label className="text-xs text-gray-500 mb-1 block">Start date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-full px-2 py-2 border border-gray-200 rounded text-sm"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="text-xs text-gray-500 mb-1 block">End date (optional)</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="w-full px-2 py-2 border border-gray-200 rounded text-sm"
+              />
+            </div>
+          </div>
           <button
             type="submit"
             disabled={saving}
@@ -130,7 +158,18 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
                 <span className="font-medium">{DAY_NAMES[item.day_of_week]}</span>
                 <span className="text-gray-400 mx-1">&middot;</span>
                 <span>{item.content}</span>
-                <span className="text-gray-400 text-xs ml-1">({item.category})</span>
+                <span className="text-gray-400 text-xs ml-1">
+                  ({item.category})
+                  {' · '}
+                  {item.start_date
+                    ? new Date(item.start_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                    : new Date(item.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                  }
+                  {item.end_date
+                    ? ` – ${new Date(item.end_date + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                    : ' onwards'
+                  }
+                </span>
               </div>
               <button
                 onClick={() => handleDelete(item.id)}

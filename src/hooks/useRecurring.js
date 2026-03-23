@@ -29,6 +29,8 @@ export function useRecurring(familyId) {
       category: item.category,
       day_of_week: item.day_of_week,
       content: item.content,
+      start_date: item.start_date || null,
+      end_date: item.end_date || null,
     })
     if (error) return { error }
     await load()
