@@ -30,7 +30,7 @@ export function useWeather(weekDates) {
 
     setLoading(true)
     fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${TAMPA_LAT}&longitude=${TAMPA_LNG}&daily=temperature_2m_max,temperature_2m_min&temperature_unit=fahrenheit&timezone=America/New_York&start_date=${startDate}&end_date=${endDate}`
+      `https://api.open-meteo.com/v1/forecast?latitude=${TAMPA_LAT}&longitude=${TAMPA_LNG}&daily=temperature_2m_max,temperature_2m_min,weather_code&temperature_unit=fahrenheit&timezone=America/New_York&start_date=${startDate}&end_date=${endDate}`
     )
       .then(res => res.json())
       .then(data => {
@@ -40,6 +40,7 @@ export function useWeather(weekDates) {
           result[date] = {
             high: Math.round(data.daily.temperature_2m_max[i]),
             low: Math.round(data.daily.temperature_2m_min[i]),
+            code: data.daily.weather_code?.[i],
           }
         })
         setWeather(result)

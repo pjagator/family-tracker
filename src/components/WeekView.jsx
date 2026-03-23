@@ -1,6 +1,7 @@
 import WeekGrid from './WeekGrid'
 import WordList from './WordList'
 import { useSwipe } from '../hooks/useSwipe'
+import { useMobileView } from '../hooks/useMobileView'
 
 export default function WeekView({
   week, weekDates, dayNumbers, globalNoSchool, personNoSchool,
@@ -8,9 +9,15 @@ export default function WeekView({
   entries, onPrev, onNext, onToday, onCellTap, onAllieToggle, getEntry,
   words, onSaveWords,
 }) {
+  const mobile = useMobileView(weekDates)
+
   const { onTouchStart, onTouchEnd } = useSwipe({
-    onSwipeLeft: onNext,
-    onSwipeRight: onPrev,
+    onSwipeLeft: mobile.isMobile
+      ? (mobile.canSlideRight ? mobile.slideRight : onNext)
+      : onNext,
+    onSwipeRight: mobile.isMobile
+      ? (mobile.canSlideLeft ? mobile.slideLeft : onPrev)
+      : onPrev,
   })
 
   return (
@@ -31,14 +38,17 @@ export default function WeekView({
             onPrev={onPrev}
             onNext={onNext}
             onToday={onToday}
+            isMobile={mobile.isMobile}
+            visibleDates={mobile.visibleDates}
+            startIdx={mobile.startIdx}
           />
 
           {/* Lucia's weekly words */}
           <div className="mt-3 mx-0">
             <div className="px-3 py-2" style={{ backgroundColor: '#5b3a6b' }}>
-              <span className="text-[12px] font-bold text-white">Lucia's Words</span>
+              <span className="text-[12px] font-bold text-white">🎨 Lucia's Words</span>
             </div>
-            <div className="bg-white border border-[#e2e8f0] border-t-0">
+            <div className="bg-white border border-slate-300 border-t-0">
               <WordList type="vocab" words={words?.vocab || []} onSave={onSaveWords} />
               <WordList type="spelling" words={words?.spelling || []} onSave={onSaveWords} />
             </div>

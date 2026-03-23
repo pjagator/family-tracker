@@ -7,6 +7,10 @@ const CATEGORY_LABELS = {
   work: 'Work', events: 'Events', schedule: 'Schedule',
 }
 
+const SCHOOL_CATEGORIES = new Set([
+  'math', 'science', 'ela', 'ss', 'spanish', 'religion', 'homework', 'specials',
+])
+
 export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
   const [content, setContent] = useState('')
   const [isTest, setIsTest] = useState(false)
@@ -61,7 +65,7 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
 
       {/* Sheet */}
       <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl animate-slideUp max-h-[80vh] overflow-y-auto">
-        <div className="p-4 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+        <div className="p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <div>
@@ -81,27 +85,29 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
             className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-navy resize-none"
           />
 
-          {/* Toggles */}
-          <div className="flex items-center gap-4 mt-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={isTest}
-                onChange={(e) => setIsTest(e.target.checked)}
-                className="rounded border-gray-300 text-test focus:ring-test"
-              />
-              <span className={isTest ? 'text-test font-medium' : 'text-gray-600'}>Test / Quiz</span>
-            </label>
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={isComplete}
-                onChange={(e) => setIsComplete(e.target.checked)}
-                className="rounded border-gray-300 text-complete focus:ring-complete"
-              />
-              <span className={isComplete ? 'text-complete font-medium' : 'text-gray-600'}>Complete</span>
-            </label>
-          </div>
+          {/* Toggles — only for school subject rows */}
+          {SCHOOL_CATEGORIES.has(cell.category) && (
+            <div className="flex items-center gap-4 mt-3">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isTest}
+                  onChange={(e) => setIsTest(e.target.checked)}
+                  className="rounded border-gray-300 text-test focus:ring-test"
+                />
+                <span className={isTest ? 'text-test font-medium' : 'text-gray-600'}>Test / Quiz</span>
+              </label>
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={isComplete}
+                  onChange={(e) => setIsComplete(e.target.checked)}
+                  className="rounded border-gray-300 text-complete focus:ring-complete"
+                />
+                <span className={isComplete ? 'text-complete font-medium' : 'text-gray-600'}>Complete</span>
+              </label>
+            </div>
+          )}
 
           {/* Actions */}
           <div className="flex gap-3 mt-4">

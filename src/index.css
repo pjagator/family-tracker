@@ -7,12 +7,45 @@
   --color-slate: #64748b;
   --color-test: #c4622d;
   --color-complete: #4a7c59;
-  --color-today: #eef2ff;
+  --color-today: #dbeafe;
+  --color-today-border: #3b82f6;
   --color-weekend: #f8f9fa;
+  --color-dimmed: #f1f5f9;
   --animate-slideUp: slideUp 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-expandDown: expandDown 0.25s ease-out forwards;
+  --animate-fadeIn: fadeIn 0.15s ease-out;
+  --animate-slideLeft: slideLeft 0.2s ease-out;
+  --animate-slideRight: slideRight 0.2s ease-out;
 }
 
 @keyframes slideUp {
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
+}
+
+@keyframes expandDown {
+  from { max-height: 0; opacity: 0; }
+  to { max-height: 2000px; opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideLeft {
+  from { transform: translateX(30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes slideRight {
+  from { transform: translateX(-30px); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
 }

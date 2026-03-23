@@ -11,8 +11,8 @@ export default function BottomNav({ active, onNavigate }) {
         <button
           key={key}
           onClick={() => onNavigate(key)}
-          className={`flex flex-col items-center gap-0.5 px-4 py-1.5 ${
-            active === key ? 'text-navy' : 'text-slate'
+          className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
+            active === key ? 'bg-navy/10 text-navy' : 'text-slate'
           }`}
         >
           <span className="text-xl">{icon}</span>
