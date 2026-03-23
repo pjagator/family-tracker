@@ -147,11 +147,40 @@ button { user-select: none; -webkit-user-select: none; }
 
 ---
 
+## Task 7: Fix Recurring Items
+
+Two issues: recurring items don't populate existing weeks, and no date range support.
+
+**Bug fix — populate on every week load:**
+- In `useWeek.js`, after loading an existing week (not just on creation), check for missing recurring entries
+- For each active recurring item, check if an entry already exists for that person/category/date in the week
+- Only populate dates that are **today or in the future** (don't backfill past days)
+- Filter by date range: only populate if the week date falls within the item's start_date/end_date range
+- Existing items (no start_date field) use `created_at` as their effective start date
+
+**Date range support — database:**
+- Add `start_date` (date, nullable) and `end_date` (date, nullable) columns to `recurring` table in Supabase
+- `start_date` null → use `created_at` as effective start
+- `end_date` null → recurs indefinitely
+- Filter in the populate query: `start_date <= week_date AND (end_date IS NULL OR end_date >= week_date)`
+
+**Date range support — UI (RecurringManager.jsx):**
+- Add optional "Start date" field to the form, defaults to today
+- Add optional "End date" field, blank by default (indefinite)
+- Both are standard date inputs (`type="date"`)
+- Display date range on each recurring item row: "Mon · Piano lesson (activities) · Mar 23 – Jun 15" or "Mon · Piano lesson (activities) · from Mar 23"
+- Pass `start_date` and `end_date` through `useRecurring.add()`
+
+**Files:** `useWeek.js` (populate logic), `useRecurring.js` (add start_date/end_date to insert), `RecurringManager.jsx` (form fields + display), Supabase migration (add columns)
+
+---
+
 ## Implementation Order
 
 ```
 Task 1: Toast system (infrastructure, unblocks error handling fixes)
 Task 2: Swipe-to-dismiss (independent, can run in parallel with Task 1)
+Task 7: Recurring items fix (independent, can run in parallel)
   └── Task 3: Transitions, user-select, contrast (systematic sweep, after Task 1)
         └── Task 4: Typography and spacing (builds on sweep)
               └── Task 5: Empty states, loading, animations (polish pass)
@@ -166,3 +195,4 @@ Task 2: Swipe-to-dismiss (independent, can run in parallel with Task 1)
 - Task #7: Typography and spacing
 - Task #8: Empty states, loading, animations
 - Task #9: Touch targets and style guide update
+- Task #10: Recurring items fix
