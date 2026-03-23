@@ -20,6 +20,10 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
   const [isComplete, setIsComplete] = useState(false)
   const [saving, setSaving] = useState(false)
   const inputRef = useRef(null)
+  const handleSaveRef = useRef(null)
+  const { sheetRef, onTouchStart, onTouchMove, onTouchEnd } = useSwipeDismiss({
+    onDismiss: () => handleSaveRef.current?.(),
+  })
 
   useEffect(() => {
     if (cell) {
@@ -52,10 +56,7 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
     showToast({ message: 'Entry saved', type: 'success' })
     onClose()
   }
-
-  const { sheetRef, onTouchStart, onTouchMove, onTouchEnd } = useSwipeDismiss({
-    onDismiss: handleSave,
-  })
+  handleSaveRef.current = handleSave
 
   const handleDelete = async () => {
     if (!cell.entry?.id) { onClose(); return }
