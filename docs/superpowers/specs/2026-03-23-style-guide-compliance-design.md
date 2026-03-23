@@ -38,6 +38,8 @@ New `Toast.jsx` component + `useToast` hook via React context.
 - WordList.jsx: success toast on save
 - RecurringManager.jsx: success toast on add/remove
 
+**Double-tap guard:** Add `disabled={saving}` (or equivalent loading state) to all save/submit buttons that don't already have it. Check: `CampView.jsx` (camp name save on blur, delete button), `Auth.jsx` (already has `disabled={loading}` — OK).
+
 **Files:** new `Toast.jsx`, new `ToastContext.jsx`, modified `App.jsx`, `Auth.jsx`, `FamilySetup.jsx`, `EntrySheet.jsx`, `CampView.jsx`, `WordList.jsx`, `RecurringManager.jsx`
 
 ---
@@ -74,6 +76,8 @@ button { user-select: none; -webkit-user-select: none; }
 - WeatherRow.jsx: loading "..." and empty "--"
 - WordList.jsx: "No words this week"
 - WeekGrid.jsx: collapsed summary, various labels
+
+**Reduced motion:** Verify the existing `prefers-reduced-motion` rule in `index.css` covers all new animations added in Tasks 1, 2, and 5. The current blanket rule (`animation-duration: 0.01ms !important; transition-duration: 0.01ms !important`) should cover everything, but confirm after implementation.
 
 **Files:** `index.css`, all component files with active: states, specific files listed above for contrast
 
@@ -132,12 +136,23 @@ button { user-select: none; -webkit-user-select: none; }
 
 ---
 
+## Out of Scope
+
+- **BeauGrid.jsx, LuciaGrid.jsx** — dead code from an earlier version, not rendered anywhere. Should be deleted during cleanup but not part of this spec.
+- **WeekView.jsx** — thin wrapper that delegates to WeekGrid. Only contains one `text-[12px]` (Lucia's Words header) which falls under the grid exception. No other violations.
+- **Images section** — app has no user-uploaded images; not applicable.
+- **Performance section** — app is small enough that Lighthouse optimization is not needed now.
+- **Card stagger animation** — no card lists in the app; grid cells render as a grid, not staggered cards.
+- **Semantic HTML beyond contrast** — per user decision, deferred to future work.
+
+---
+
 ## Implementation Order
 
 ```
 Task 1: Toast system (infrastructure, unblocks error handling fixes)
-  ├── Task 2: Swipe-to-dismiss (independent, blocked on toast for shared animation patterns)
-  └── Task 3: Transitions, user-select, contrast (systematic sweep)
+Task 2: Swipe-to-dismiss (independent, can run in parallel with Task 1)
+  └── Task 3: Transitions, user-select, contrast (systematic sweep, after Task 1)
         └── Task 4: Typography and spacing (builds on sweep)
               └── Task 5: Empty states, loading, animations (polish pass)
                     └── Task 6: Touch targets and style guide update (final)
