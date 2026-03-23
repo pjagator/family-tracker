@@ -141,7 +141,7 @@ export default function App() {
             <p className="text-xs text-slate">
               Invite code: <span className="font-mono font-semibold text-navy tracking-wider">{family.invite_code}</span>
             </p>
-            <p className="text-[11px] text-gray-400 mt-1">Share this code so others can join your family.</p>
+            <p className="text-xs text-gray-400 mt-1">Share this code so others can join your family.</p>
           </div>
 
           <div className="bg-gray-50 rounded-lg p-3 mb-4">

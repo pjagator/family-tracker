@@ -11,12 +11,12 @@ export default function BottomNav({ active, onNavigate }) {
         <button
           key={key}
           onClick={() => onNavigate(key)}
-          className={`flex flex-col items-center gap-0.5 px-4 py-1.5 rounded-xl transition-colors ${
+          className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-colors ${
             active === key ? 'bg-navy/10 text-navy' : 'text-slate'
           }`}
         >
           <span className="text-xl">{icon}</span>
-          <span className={`text-[11px] ${active === key ? 'font-bold' : 'font-medium'}`}>{label}</span>
+          <span className={`text-xs ${active === key ? 'font-bold' : 'font-medium'}`}>{label}</span>
         </button>
       ))}
     </nav>

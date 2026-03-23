@@ -117,11 +117,11 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
 
       {Object.entries(grouped).map(([personKey, personItems]) => (
         <div key={personKey} className="mb-2">
-          <div className="text-[11px] font-semibold text-slate uppercase tracking-wider mb-1">
+          <div className="text-xs font-semibold text-slate uppercase tracking-wider mb-1">
             {personKey.charAt(0).toUpperCase() + personKey.slice(1)}
           </div>
           {personItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between py-1.5 px-2 bg-white rounded mb-1 border border-gray-100">
+            <div key={item.id} className="flex items-center justify-between py-2 px-2 bg-white rounded mb-1 border border-gray-100">
               <div className="text-sm text-gray-700">
                 <span className="font-medium">{DAY_NAMES[item.day_of_week]}</span>
                 <span className="text-gray-400 mx-1">&middot;</span>

@@ -87,7 +87,7 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
             <div>
-              <div className="text-[15px] font-semibold text-navy">{personLabel} &middot; {categoryLabel}</div>
+              <div className="text-base font-semibold text-navy">{personLabel} &middot; {categoryLabel}</div>
               <div className="text-xs text-slate">{dateLabel}</div>
             </div>
             <button onClick={onClose} className="text-slate text-xl p-1">&times;</button>
@@ -95,7 +95,7 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
 
           {/* Dimmed cell hint */}
           {cell.dimmed && !cell.entry?.content && (
-            <div className="text-[11px] text-gray-400 italic mb-2">This subject doesn't normally meet on this day</div>
+            <div className="text-xs text-gray-400 italic mb-2">This subject doesn't normally meet on this day</div>
           )}
 
           {/* Content input */}
@@ -105,7 +105,7 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
             onChange={(e) => setContent(e.target.value)}
             placeholder="What's happening..."
             rows={3}
-            className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-navy resize-none"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-navy resize-none"
           />
 
           {/* Toggles — only for school subject rows */}

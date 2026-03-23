@@ -106,7 +106,7 @@ export default function CampView({ camps, onUpsert, onRemove }) {
             <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border-b border-gray-200">
               <div>
                 <div className="text-sm font-semibold text-navy">{w.week_name}</div>
-                {w.dates && <div className="text-[11px] text-slate">{w.dates}</div>}
+                {w.dates && <div className="text-xs text-slate">{w.dates}</div>}
               </div>
               <button
                 onClick={() => handleDeleteWeek(w)}
@@ -123,8 +123,8 @@ export default function CampView({ camps, onUpsert, onRemove }) {
               if (!camp) return null
               const isEditing = editing === camp.id
               return (
-                <div key={person} className="flex items-center gap-2 px-3 py-2.5 border-b border-gray-100 last:border-0">
-                  <span className="text-[12px] font-medium text-slate w-14 shrink-0">
+                <div key={person} className="flex items-center gap-2 px-3 py-3 border-b border-gray-100 last:border-0">
+                  <span className="text-xs font-medium text-slate w-14 shrink-0">
                     {person.charAt(0).toUpperCase() + person.slice(1)}
                   </span>
                   <div className="flex-1 min-w-0">
@@ -146,14 +146,14 @@ export default function CampView({ camps, onUpsert, onRemove }) {
                       </button>
                     )}
                   </div>
-                  <label className="flex items-center gap-1.5 shrink-0 cursor-pointer">
+                  <label className="flex items-center gap-2 shrink-0 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={camp.is_registered}
                       onChange={() => handleToggleRegistered(camp)}
                       className="rounded border-gray-300 text-navy focus:ring-navy"
                     />
-                    <span className={`text-[11px] ${camp.is_registered ? 'text-complete font-medium' : 'text-gray-400'}`}>
+                    <span className={`text-xs ${camp.is_registered ? 'text-complete font-medium' : 'text-gray-400'}`}>
                       Reg
                     </span>
                   </label>
