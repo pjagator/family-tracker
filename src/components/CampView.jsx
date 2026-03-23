@@ -1,12 +1,15 @@
 import { useState } from 'react'
+import { useToast } from './ToastContext'
 
 const CHILDREN = ['beau', 'lucia', 'niva']
 
 export default function CampView({ camps, onUpsert, onRemove }) {
+  const showToast = useToast()
   const [showAdd, setShowAdd] = useState(false)
   const [weekName, setWeekName] = useState('')
   const [dates, setDates] = useState('')
   const [editing, setEditing] = useState(null) // camp id being edited
+  const [deleting, setDeleting] = useState(false)
 
   // Group camps by week_name + dates
   const weeks = []
@@ -29,6 +32,7 @@ export default function CampView({ camps, onUpsert, onRemove }) {
     setWeekName('')
     setDates('')
     setShowAdd(false)
+    showToast({ message: 'Camp week added', type: 'success' })
   }
 
   const handleCampNameSave = async (camp, newName) => {
@@ -42,11 +46,13 @@ export default function CampView({ camps, onUpsert, onRemove }) {
 
   const handleDeleteWeek = async (weekData) => {
     if (!confirm(`Delete "${weekData.week_name}" and all camp entries?`)) return
+    setDeleting(true)
     for (const person of CHILDREN) {
       if (weekData.camps[person]) {
         await onRemove(weekData.camps[person].id)
       }
     }
+    setDeleting(false)
   }
 
   return (
@@ -104,7 +110,8 @@ export default function CampView({ camps, onUpsert, onRemove }) {
               </div>
               <button
                 onClick={() => handleDeleteWeek(w)}
-                className="text-gray-400 text-xs px-2 py-1 active:text-red-500"
+                disabled={deleting}
+                className="text-gray-400 text-xs px-2 py-1 active:text-red-500 disabled:opacity-50"
               >
                 Delete
               </button>

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { ToastProvider } from './components/ToastContext'
 import { useAuth } from './hooks/useAuth'
 import { useFamily } from './hooks/useFamily'
 import { useWeek } from './hooks/useWeek'
@@ -80,21 +81,24 @@ export default function App() {
 
   if (authLoading || (user && familyLoading)) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-navy">
-        <div className="text-white text-sm">Loading...</div>
-      </div>
+      <ToastProvider>
+        <div className="min-h-screen flex items-center justify-center bg-navy">
+          <div className="text-white text-sm">Loading...</div>
+        </div>
+      </ToastProvider>
     )
   }
 
   if (!user) {
-    return <Auth onSignIn={signIn} onSignUp={signUp} onSendOtp={sendOtp} onVerifyOtp={verifyOtp} onResetPassword={resetPassword} />
+    return <ToastProvider><Auth onSignIn={signIn} onSignUp={signUp} onSendOtp={sendOtp} onVerifyOtp={verifyOtp} onResetPassword={resetPassword} /></ToastProvider>
   }
 
   if (!family) {
-    return <FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} />
+    return <ToastProvider><FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} /></ToastProvider>
   }
 
   return (
+    <ToastProvider>
     <div className="min-h-screen bg-white">
       {activeTab === 'week' && (
         <>
@@ -177,5 +181,6 @@ export default function App() {
 
       <BottomNav active={activeTab} onNavigate={setActiveTab} />
     </div>
+    </ToastProvider>
   )
 }

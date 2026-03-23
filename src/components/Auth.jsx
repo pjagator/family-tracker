@@ -1,10 +1,11 @@
 import { useState } from 'react'
+import { useToast } from './ToastContext'
 
 export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onResetPassword }) {
+  const showToast = useToast()
   const [tab, setTab] = useState('signin') // signin | signup | code
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
-  const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
 
@@ -19,32 +20,29 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
 
   const handleSignIn = async (e) => {
     e.preventDefault()
-    setError('')
     setMessage('')
     setLoading(true)
     const { error } = await onSignIn(email, password)
-    if (error) setError(error.message)
+    if (error) showToast({ message: 'Invalid email or password.', type: 'error' })
     setLoading(false)
   }
 
   const handleSignUp = async (e) => {
     e.preventDefault()
-    setError('')
     setMessage('')
     setLoading(true)
     const { error } = await onSignUp(email, password)
-    if (error) setError(error.message)
-    else setMessage('Account created! You can now sign in.')
+    if (error) showToast({ message: 'Could not create account. Try a different email.', type: 'error' })
+    else showToast({ message: 'Account created! You can now sign in.', type: 'success' })
     setLoading(false)
   }
 
   const handleSendCode = async (e) => {
     e.preventDefault()
-    setError('')
     setMessage('')
     setLoading(true)
     const { error } = await onSendOtp(otpEmail)
-    if (error) { setError(error.message); setLoading(false); return }
+    if (error) { showToast({ message: 'Could not send code. Check your email address.', type: 'error' }); setLoading(false); return }
     setOtpSent(true)
     setMessage('Code sent! Check your email.')
     setLoading(false)
@@ -52,28 +50,25 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
 
   const handleVerifyCode = async (e) => {
     e.preventDefault()
-    setError('')
     setMessage('')
     setLoading(true)
     const { error } = await onVerifyOtp(otpEmail, otpCode)
-    if (error) setError(error.message)
+    if (error) showToast({ message: 'Invalid code. Please try again.', type: 'error' })
     setLoading(false)
   }
 
   const handleReset = async (e) => {
     e.preventDefault()
-    setError('')
     setMessage('')
     setLoading(true)
     const { error } = await onResetPassword(resetEmail)
-    if (error) setError(error.message)
-    else setMessage('Check your email for a password reset link!')
+    if (error) showToast({ message: 'Could not send reset link. Check your email.', type: 'error' })
+    else showToast({ message: 'Reset link sent! Check your email.', type: 'success' })
     setLoading(false)
   }
 
   const switchTab = (t) => {
     setTab(t)
-    setError('')
     setMessage('')
     setShowReset(false)
   }
@@ -128,7 +123,7 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
             </button>
             <button
               type="button"
-              onClick={() => { setShowReset(true); setResetEmail(email); setError(''); setMessage('') }}
+              onClick={() => { setShowReset(true); setResetEmail(email); setMessage('') }}
               className="w-full text-sm text-slate hover:text-navy transition"
             >
               Forgot password?
@@ -158,7 +153,7 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
             </button>
             <button
               type="button"
-              onClick={() => { setShowReset(false); setError(''); setMessage('') }}
+              onClick={() => { setShowReset(false); setMessage('') }}
               className="w-full text-sm text-slate hover:text-navy transition"
             >
               Back to sign in
@@ -244,7 +239,7 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
                 </button>
                 <button
                   type="button"
-                  onClick={() => { setOtpSent(false); setOtpCode(''); setError(''); setMessage('') }}
+                  onClick={() => { setOtpSent(false); setOtpCode(''); setMessage('') }}
                   className="w-full text-sm text-slate hover:text-navy transition"
                 >
                   Use a different email
@@ -254,7 +249,6 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
           </>
         )}
 
-        {error && <p className="text-sm text-test text-center mt-3">{error}</p>}
         {message && <p className="text-sm text-complete text-center mt-3">{message}</p>}
       </div>
     </div>

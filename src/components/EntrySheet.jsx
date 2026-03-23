@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import { useToast } from './ToastContext'
 
 const CATEGORY_LABELS = {
   math: 'Math', science: 'Science', ela: 'ELA', ss: 'Social Studies',
@@ -12,6 +13,7 @@ const SCHOOL_CATEGORIES = new Set([
 ])
 
 export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
+  const showToast = useToast()
   const [content, setContent] = useState('')
   const [isTest, setIsTest] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
@@ -46,6 +48,7 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
       is_complete: isComplete,
     })
     setSaving(false)
+    showToast({ message: 'Entry saved', type: 'success' })
     onClose()
   }
 

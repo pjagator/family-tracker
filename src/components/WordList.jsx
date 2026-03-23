@@ -1,6 +1,8 @@
 import { useState } from 'react'
+import { useToast } from './ToastContext'
 
 export default function WordList({ type, words, onSave }) {
+  const showToast = useToast()
   const [editing, setEditing] = useState(false)
   const [text, setText] = useState('')
   const [practiced, setPracticed] = useState(new Set())
@@ -16,6 +18,7 @@ export default function WordList({ type, words, onSave }) {
     await onSave(type, list)
     setEditing(false)
     setPracticed(new Set())
+    showToast({ message: 'Words saved', type: 'success' })
   }
 
   const togglePracticed = (word) => {

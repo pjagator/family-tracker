@@ -1,29 +1,28 @@
 import { useState } from 'react'
+import { useToast } from './ToastContext'
 
 export default function FamilySetup({ onCreateFamily, onJoinFamily }) {
+  const showToast = useToast()
   const [mode, setMode] = useState(null) // null, 'create', 'join'
   const [familyName, setFamilyName] = useState('')
   const [inviteCode, setInviteCode] = useState('')
-  const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleCreate = async (e) => {
     e.preventDefault()
     if (!familyName.trim()) return
-    setError('')
     setLoading(true)
     const { error } = await onCreateFamily(familyName.trim())
-    if (error) setError(error.message)
+    if (error) showToast({ message: 'Could not create family. Please try again.', type: 'error' })
     setLoading(false)
   }
 
   const handleJoin = async (e) => {
     e.preventDefault()
     if (!inviteCode.trim()) return
-    setError('')
     setLoading(true)
     const { error } = await onJoinFamily(inviteCode.trim())
-    if (error) setError(error.message)
+    if (error) showToast({ message: 'Invalid invite code. Check and try again.', type: 'error' })
     setLoading(false)
   }
 
@@ -72,7 +71,7 @@ export default function FamilySetup({ onCreateFamily, onJoinFamily }) {
             </button>
             <button
               type="button"
-              onClick={() => { setMode(null); setError('') }}
+              onClick={() => setMode(null)}
               className="w-full py-2 text-sm text-slate"
             >
               Back
@@ -100,7 +99,7 @@ export default function FamilySetup({ onCreateFamily, onJoinFamily }) {
             </button>
             <button
               type="button"
-              onClick={() => { setMode(null); setError('') }}
+              onClick={() => setMode(null)}
               className="w-full py-2 text-sm text-slate"
             >
               Back
@@ -108,7 +107,6 @@ export default function FamilySetup({ onCreateFamily, onJoinFamily }) {
           </form>
         )}
 
-        {error && <p className="text-sm text-test text-center mt-3">{error}</p>}
       </div>
     </div>
   )

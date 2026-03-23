@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useToast } from './ToastContext'
 
 const DAY_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
 
@@ -11,6 +12,7 @@ const PERSON_CATEGORIES = {
 }
 
 export default function RecurringManager({ items, onAdd, onRemove }) {
+  const showToast = useToast()
   const [showForm, setShowForm] = useState(false)
   const [person, setPerson] = useState('beau')
   const [category, setCategory] = useState('activities')
@@ -31,6 +33,7 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
     setContent('')
     setSaving(false)
     setShowForm(false)
+    showToast({ message: 'Recurring item added', type: 'success' })
   }
 
   const handleDelete = async (id) => {
