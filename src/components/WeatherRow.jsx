@@ -27,7 +27,7 @@ export default function WeatherRow({ weekDates, gridCols }) {
         return (
           <div
             key={date}
-            className="bg-gray-50/50 border border-slate-300 p-1 text-center text-[11px] text-slate flex items-center justify-center min-h-[32px]"
+            className="bg-gray-50/50 border border-slate-300 p-1 text-center text-[11px] text-slate flex items-center justify-center min-h-[44px]"
           >
             {loading ? (
               <span className="text-gray-400">...</span>

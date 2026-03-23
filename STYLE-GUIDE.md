@@ -24,6 +24,10 @@ Font weights: 400 (regular body), 500 (medium for labels), 600 (semibold for car
 
 Every text element must use a step from this scale. No exceptions.
 
+### Grid Exception
+
+WeekGrid, EntryCell, WeatherRow, and WeekNav may use arbitrary font sizes below text-xs (12px) for information density. These components are exempt from the typography scale but must still follow all other style guide rules (touch targets, transitions, contrast, etc.).
+
 ---
 
 ## Spacing

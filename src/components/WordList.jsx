@@ -74,7 +74,7 @@ export default function WordList({ type, words, onSave }) {
             <button
               key={i}
               onClick={() => togglePracticed(w)}
-              className={`text-xs px-2.5 py-1 rounded-full transition-colors ${
+              className={`text-xs px-3 py-2 rounded-full transition-colors ${
                 practiced.has(w)
                   ? 'bg-purple-200 text-purple-800 ring-1 ring-purple-300'
                   : 'bg-purple-50 text-purple-700 active:bg-purple-100'

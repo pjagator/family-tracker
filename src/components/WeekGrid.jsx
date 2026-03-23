@@ -408,7 +408,7 @@ export default function WeekGrid({
                               >
                                 <button
                                   onClick={() => onAllieToggle({ id: entry?.id || null, person: 'allie', category: 'work', date, content: val === 'Teach' ? '' : 'Teach' })}
-                                  className={`text-[10px] font-medium px-2 py-1 rounded-full transition min-h-[28px] ${
+                                  className={`text-[10px] font-medium px-2 py-1 rounded-full transition min-h-[44px] ${
                                     val === 'Teach' ? 'bg-navy text-white' : 'bg-gray-100 text-gray-400 active:bg-gray-200'
                                   }`}
                                 >
@@ -416,7 +416,7 @@ export default function WeekGrid({
                                 </button>
                                 <button
                                   onClick={() => onAllieToggle({ id: entry?.id || null, person: 'allie', category: 'work', date, content: val === 'Off' ? '' : 'Off' })}
-                                  className={`text-[10px] font-medium px-2 py-1 rounded-full transition min-h-[28px] ${
+                                  className={`text-[10px] font-medium px-2 py-1 rounded-full transition min-h-[44px] ${
                                     val === 'Off' ? 'bg-gray-500 text-white' : 'bg-gray-100 text-gray-400 active:bg-gray-200'
                                   }`}
                                 >
