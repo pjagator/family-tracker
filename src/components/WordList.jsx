@@ -91,7 +91,7 @@ export default function WordList({ type, words, onSave }) {
           )}
         </div>
       ) : (
-        <p className="text-xs text-gray-400">No words this week</p>
+        <p className="text-xs text-gray-400 py-2">No words this week — tap Edit to add</p>
       )}
     </div>
   )

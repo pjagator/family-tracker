@@ -112,7 +112,11 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
       )}
 
       {items.length === 0 && !showForm && (
-        <p className="text-xs text-gray-400">No recurring items yet. These auto-fill when new weeks are created.</p>
+        <div className="py-8 text-center">
+          <div className="text-2xl mb-2">🔄</div>
+          <div className="text-xl font-semibold text-navy mb-1">No recurring items</div>
+          <div className="text-sm text-gray-500">Add items that repeat every week</div>
+        </div>
       )}
 
       {Object.entries(grouped).map(([personKey, personItems]) => (

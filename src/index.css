@@ -11,7 +11,7 @@
   --color-today-border: #3b82f6;
   --color-weekend: #f8f9fa;
   --color-dimmed: #f1f5f9;
-  --animate-slideUp: slideUp 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+  --animate-slideUp: slideUp 0.3s cubic-bezier(0.32, 0.72, 0, 1);
   --animate-expandDown: expandDown 0.25s ease-out forwards;
   --animate-fadeIn: fadeIn 0.15s ease-out;
   --animate-slideLeft: slideLeft 0.2s ease-out;

@@ -94,8 +94,16 @@ export default function CampView({ camps, onUpsert, onRemove }) {
       )}
 
       {weeks.length === 0 && !showAdd && (
-        <div className="p-8 text-center text-gray-400 text-sm">
-          No camps planned yet. Tap "+ Add week" to get started.
+        <div className="py-12 text-center">
+          <div className="text-3xl mb-3">🏕️</div>
+          <div className="text-xl font-semibold text-navy mb-1">No camps planned yet</div>
+          <div className="text-sm text-gray-500 mb-4">Add a summer camp week to get started</div>
+          <button
+            onClick={() => setShowAdd(true)}
+            className="px-4 py-2 bg-navy text-white rounded-lg text-sm font-medium active:scale-[0.98] transition"
+          >
+            + Add week
+          </button>
         </div>
       )}
 

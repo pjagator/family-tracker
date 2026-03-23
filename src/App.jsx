@@ -83,7 +83,7 @@ export default function App() {
     return (
       <ToastProvider>
         <div className="min-h-screen flex items-center justify-center bg-navy">
-          <div className="text-white text-sm">Loading...</div>
+          <div className="text-white text-sm animate-pulse">Loading...</div>
         </div>
       </ToastProvider>
     )
@@ -101,9 +101,9 @@ export default function App() {
     <ToastProvider>
     <div className="min-h-screen bg-white">
       {activeTab === 'week' && (
-        <>
+        <div className="animate-fadeIn">
           {weekLoading ? (
-            <div className="bg-navy text-white px-4 py-4 text-center text-sm">Loading week...</div>
+            <div className="bg-navy text-white px-4 py-8 text-center text-sm animate-pulse">Loading week...</div>
           ) : (
             <WeekView
               week={week}
@@ -125,14 +125,17 @@ export default function App() {
               onSaveWords={saveWords}
             />
           )}
-        </>
+        </div>
       )}
 
       {activeTab === 'camps' && (
-        <CampView camps={camps} onUpsert={upsertCamp} onRemove={removeCamp} />
+        <div className="animate-fadeIn">
+          <CampView camps={camps} onUpsert={upsertCamp} onRemove={removeCamp} />
+        </div>
       )}
 
       {activeTab === 'settings' && (
+        <div className="animate-fadeIn">
         <div className="p-6 pb-24">
           <h2 className="text-lg font-bold text-navy mb-4">Settings</h2>
           <p className="text-sm text-slate mb-2">{user.email}</p>
@@ -169,6 +172,7 @@ export default function App() {
           >
             Sign out
           </button>
+        </div>
         </div>
       )}
 
