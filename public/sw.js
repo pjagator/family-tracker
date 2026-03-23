@@ -1,4 +1,4 @@
-const CACHE_VERSION = '20260323a'
+const CACHE_VERSION = '20260323b'
 const CACHE_NAME = `family-tracker-${CACHE_VERSION}`
 const SHELL_URLS = ['/', '/index.html']
 
