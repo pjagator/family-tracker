@@ -429,16 +429,6 @@ export default function WeekGrid({
                       )
                     }
 
-                    // Beau: hide rows that don't meet on any day
-                    const beauHasDayNumbers = person.key === 'beau' &&
-                      weekDates.slice(0, 5).some(d => dayNumbers[d] && !globalSet.has(d))
-                    if (person.key === 'beau' && beauHasDayNumbers && !BEAU_ALL_DAYS.has(cat)) {
-                      const meetsAnyDay = weekDates.slice(0, 5).some(d =>
-                        !globalSet.has(d) && !isPersonOff('beau', d) && beauRowMeetsOnDay(cat, dayNumbers[d])
-                      )
-                      if (!meetsAnyDay) return null
-                    }
-
                     return (
                       <div key={cat} className="contents">
                         <div

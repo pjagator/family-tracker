@@ -15,7 +15,7 @@ import CampView from './components/CampView'
 import BottomNav from './components/BottomNav'
 
 export default function App() {
-  const { user, loading: authLoading, signIn, signUp, signOut } = useAuth()
+  const { user, loading: authLoading, signIn, signUp, signOut, sendOtp, verifyOtp, resetPassword } = useAuth()
   const { family, loading: familyLoading, createFamily, joinFamily } = useFamily(user?.id)
   const {
     week, weekDates, dayNumbers, globalNoSchool, personNoSchool, loading: weekLoading,
@@ -87,7 +87,7 @@ export default function App() {
   }
 
   if (!user) {
-    return <Auth onSignIn={signIn} onSignUp={signUp} />
+    return <Auth onSignIn={signIn} onSignUp={signUp} onSendOtp={sendOtp} onVerifyOtp={verifyOtp} onResetPassword={resetPassword} />
   }
 
   if (!family) {

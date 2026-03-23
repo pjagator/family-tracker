@@ -1,4 +1,5 @@
-const CACHE_NAME = 'family-tracker-v1'
+const CACHE_VERSION = '20260323a'
+const CACHE_NAME = `family-tracker-${CACHE_VERSION}`
 const SHELL_URLS = ['/', '/index.html']
 
 self.addEventListener('install', (event) => {
@@ -49,16 +50,14 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Cache-first for app shell (HTML, JS, CSS, fonts)
+  // Network-first for app shell (HTML, JS, CSS, fonts) — ensures deploys take effect immediately
   event.respondWith(
-    caches.match(event.request).then((cached) => {
-      return cached || fetch(event.request).then((res) => {
-        if (res.ok && event.request.method === 'GET') {
-          const clone = res.clone()
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
-        }
-        return res
-      })
-    })
+    fetch(event.request).then((res) => {
+      if (res.ok && event.request.method === 'GET') {
+        const clone = res.clone()
+        caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
+      }
+      return res
+    }).catch(() => caches.match(event.request))
   )
 })
