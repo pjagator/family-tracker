@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { useToast } from './ToastContext'
+import { useSwipeDismiss } from '../hooks/useSwipeDismiss'
 
 const CATEGORY_LABELS = {
   math: 'Math', science: 'Science', ela: 'ELA', ss: 'Social Studies',
@@ -52,6 +53,10 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
     onClose()
   }
 
+  const { sheetRef, onTouchStart, onTouchMove, onTouchEnd } = useSwipeDismiss({
+    onDismiss: handleSave,
+  })
+
   const handleDelete = async () => {
     if (!cell.entry?.id) { onClose(); return }
     if (!confirm('Delete this entry?')) return
@@ -67,7 +72,17 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
       <div className="fixed inset-0 bg-black/40 z-40" onClick={handleSave} />
 
       {/* Sheet */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl animate-slideUp max-h-[80vh] overflow-y-auto">
+      <div
+        ref={sheetRef}
+        onTouchStart={onTouchStart}
+        onTouchMove={onTouchMove}
+        onTouchEnd={onTouchEnd}
+        className="fixed bottom-0 left-0 right-0 z-50 bg-white rounded-t-2xl shadow-xl animate-slideUp max-h-[80vh] overflow-y-auto"
+      >
+        {/* Drag handle */}
+        <div className="flex justify-center pt-3 pb-1">
+          <div className="w-10 h-1 rounded-full bg-gray-300" />
+        </div>
         <div className="p-4 pb-[calc(5rem+env(safe-area-inset-bottom))]">
           {/* Header */}
           <div className="flex items-center justify-between mb-3">
