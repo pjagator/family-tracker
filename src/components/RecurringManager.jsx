@@ -54,7 +54,7 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
         <h3 className="text-sm font-semibold text-navy">Recurring Activities</h3>
         <button
           onClick={() => setShowForm(!showForm)}
-          className="text-xs text-navy font-medium px-2 py-1 bg-gray-100 rounded active:bg-gray-200"
+          className="text-xs text-navy font-medium px-2 py-1 bg-gray-100 rounded active:bg-gray-200 transition"
         >
           {showForm ? 'Cancel' : '+ Add'}
         </button>
@@ -130,7 +130,7 @@ export default function RecurringManager({ items, onAdd, onRemove }) {
               </div>
               <button
                 onClick={() => handleDelete(item.id)}
-                className="text-gray-400 text-xs px-1 active:text-red-500"
+                className="text-gray-400 text-xs px-1 active:text-red-500 transition"
               >
                 &times;
               </button>

@@ -30,7 +30,7 @@ export default function WeatherRow({ weekDates, gridCols }) {
             className="bg-gray-50/50 border border-slate-300 p-1 text-center text-[11px] text-slate flex items-center justify-center min-h-[32px]"
           >
             {loading ? (
-              <span className="text-gray-300">...</span>
+              <span className="text-gray-400">...</span>
             ) : w ? (
               <span>
                 <span className="mr-0.5">{weatherEmoji(w.code)}</span>
@@ -38,7 +38,7 @@ export default function WeatherRow({ weekDates, gridCols }) {
                 <span className="text-gray-400">/{w.low}°</span>
               </span>
             ) : (
-              <span className="text-gray-300">--</span>
+              <span className="text-gray-400">--</span>
             )}
           </div>
         )

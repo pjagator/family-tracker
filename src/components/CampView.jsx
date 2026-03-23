@@ -61,7 +61,7 @@ export default function CampView({ camps, onUpsert, onRemove }) {
         <h2 className="text-base font-bold">Summer Camps</h2>
         <button
           onClick={() => setShowAdd(!showAdd)}
-          className="text-xs bg-white/20 text-white px-3 py-1 rounded active:bg-white/30"
+          className="text-xs bg-white/20 text-white px-3 py-1 rounded active:bg-white/30 transition"
         >
           {showAdd ? 'Cancel' : '+ Add week'}
         </button>
@@ -86,7 +86,7 @@ export default function CampView({ camps, onUpsert, onRemove }) {
           />
           <button
             onClick={handleAddWeek}
-            className="w-full py-2 bg-navy text-white rounded text-sm font-medium active:scale-[0.98]"
+            className="w-full py-2 bg-navy text-white rounded text-sm font-medium active:scale-[0.98] transition"
           >
             Add week
           </button>
@@ -111,7 +111,7 @@ export default function CampView({ camps, onUpsert, onRemove }) {
               <button
                 onClick={() => handleDeleteWeek(w)}
                 disabled={deleting}
-                className="text-gray-400 text-xs px-2 py-1 active:text-red-500 disabled:opacity-50"
+                className="text-gray-400 text-xs px-2 py-1 active:text-red-500 disabled:opacity-50 transition"
               >
                 Delete
               </button>
@@ -140,9 +140,9 @@ export default function CampView({ camps, onUpsert, onRemove }) {
                     ) : (
                       <button
                         onClick={() => setEditing(camp.id)}
-                        className="text-sm text-gray-700 text-left w-full truncate active:text-navy"
+                        className="text-sm text-gray-700 text-left w-full truncate active:text-navy transition"
                       >
-                        {camp.camp_name || <span className="text-gray-300">Tap to add camp</span>}
+                        {camp.camp_name || <span className="text-gray-400">Tap to add camp</span>}
                       </button>
                     )}
                   </div>

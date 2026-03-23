@@ -36,7 +36,7 @@ export default function WordList({ type, words, onSave }) {
         {!editing && (
           <button
             onClick={startEdit}
-            className="text-[11px] text-navy font-medium active:text-navy-light"
+            className="text-[11px] text-navy font-medium active:text-navy-light transition"
           >
             {words.length ? 'Edit' : '+ Add'}
           </button>
@@ -91,7 +91,7 @@ export default function WordList({ type, words, onSave }) {
           )}
         </div>
       ) : (
-        <p className="text-[11px] text-gray-300">No words this week</p>
+        <p className="text-[11px] text-gray-400">No words this week</p>
       )}
     </div>
   )

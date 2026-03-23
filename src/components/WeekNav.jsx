@@ -9,14 +9,14 @@ export default function WeekNav({ weekDates, onPrev, onNext, onToday }) {
 
   return (
     <div className="bg-navy text-white px-4 py-3 flex items-center justify-between">
-      <button onClick={onPrev} className="p-2 -ml-2 active:opacity-60 text-lg">&larr;</button>
+      <button onClick={onPrev} className="p-2 -ml-2 active:opacity-60 text-lg transition">&larr;</button>
       <div className="text-center">
         <div className="text-base font-bold">{fmt(start)} &ndash; {fmt(end)}, {year}</div>
-        <button onClick={onToday} className="text-xs text-indigo-200 active:text-white mt-0.5">
+        <button onClick={onToday} className="text-xs text-indigo-200 active:text-white mt-0.5 transition">
           Today
         </button>
       </div>
-      <button onClick={onNext} className="p-2 -mr-2 active:opacity-60 text-lg">&rarr;</button>
+      <button onClick={onNext} className="p-2 -mr-2 active:opacity-60 text-lg transition">&rarr;</button>
     </div>
   )
 }

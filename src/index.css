@@ -49,3 +49,8 @@
     transition-duration: 0.01ms !important;
   }
 }
+
+button, [role="button"] {
+  user-select: none;
+  -webkit-user-select: none;
+}

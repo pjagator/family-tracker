@@ -43,7 +43,7 @@ export default function EntryCell({ entry, date, isToday, isWeekend, dimmed, onT
           {entry.content.length > 30 ? entry.content.slice(0, 30) + '…' : entry.content}
         </span>
       ) : (
-        <span className={`text-[16px] text-gray-300 ${dimmed ? 'opacity-20' : 'opacity-30'}`}>+</span>
+        <span className={`text-[16px] text-gray-400 ${dimmed ? 'opacity-20' : 'opacity-30'}`}>+</span>
       )}
     </button>
   )

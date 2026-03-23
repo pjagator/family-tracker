@@ -283,7 +283,7 @@ export default function WeekGrid({
                     {dn && !isGlobalOff && (
                       <button
                         onClick={() => handlePickerSelect(null)}
-                        className="w-full text-[11px] text-slate py-1 mt-0.5 active:bg-gray-100 rounded"
+                        className="w-full text-[11px] text-slate py-1 mt-0.5 active:bg-gray-100 rounded transition"
                       >
                         Clear
                       </button>

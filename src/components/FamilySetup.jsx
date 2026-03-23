@@ -72,7 +72,7 @@ export default function FamilySetup({ onCreateFamily, onJoinFamily }) {
             <button
               type="button"
               onClick={() => setMode(null)}
-              className="w-full py-2 text-sm text-slate"
+              className="w-full py-2 text-sm text-slate active:text-navy transition"
             >
               Back
             </button>
@@ -100,7 +100,7 @@ export default function FamilySetup({ onCreateFamily, onJoinFamily }) {
             <button
               type="button"
               onClick={() => setMode(null)}
-              className="w-full py-2 text-sm text-slate"
+              className="w-full py-2 text-sm text-slate active:text-navy transition"
             >
               Back
             </button>
