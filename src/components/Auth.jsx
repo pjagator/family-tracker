@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useToast } from './ToastContext'
+import { BrownieSvg, UrsaMinorSvg } from './SplashScreen'
 
 export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onResetPassword }) {
   const showToast = useToast()
@@ -74,11 +75,19 @@ export default function Auth({ onSignIn, onSignUp, onSendOtp, onVerifyOtp, onRes
   }
 
   return (
-    <div className="min-h-screen bg-navy flex items-center justify-center p-6">
-      <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl">
-        <h1 className="text-2xl font-bold text-navy text-center mb-1">Family Tracker</h1>
-        <p className="text-sm text-slate text-center mb-6">Alberts weekly planner</p>
+    <div className="min-h-screen bg-navy flex flex-col items-center justify-center p-6 relative overflow-hidden">
+      {/* Background poodles at reduced opacity */}
+      <div className="flex items-end gap-6 mb-6 opacity-30">
+        <BrownieSvg />
+        <UrsaMinorSvg />
+      </div>
 
+      {/* Title above the form card */}
+      <div className="text-white text-xl font-bold tracking-wide mb-4">
+        Alberts Family Tracker
+      </div>
+
+      <div className="bg-white rounded-2xl p-8 w-full max-w-sm shadow-xl">
         {/* Tabs */}
         <div className="flex bg-gray-100 rounded-lg p-1 mb-5 gap-1">
           {[['signin', 'Sign in'], ['signup', 'Sign up'], ['code', 'Email code']].map(([key, label]) => (
