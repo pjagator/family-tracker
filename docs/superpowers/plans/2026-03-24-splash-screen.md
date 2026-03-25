@@ -250,7 +250,11 @@ useEffect(() => {
 Delete ALL early returns (the old loading screen, `!user`, and `!family` blocks). Replace with inline computation before the main `return`:
 
 ```jsx
-const allDataReady = !authLoading && user && !familyLoading && family && !weekLoading
+const allDataReady = !authLoading && (
+  !user ||                                          // auth resolved, no user → show login
+  (!familyLoading && !family) ||                    // user exists but no family → show setup
+  (!familyLoading && family && !weekLoading)         // full app ready
+)
 const splashReady = allDataReady && minTimeElapsed
 
 // Determine what content to show beneath the splash
@@ -258,7 +262,7 @@ const showAuth = !authLoading && !user
 const showFamilySetup = !authLoading && user && !familyLoading && !family
 ```
 
-**Key:** No early returns. All screens (Auth, FamilySetup, main app) render inside the main return block, behind the splash overlay (z-50). This prevents an auth race condition where `getSession()` resolves before `onAuthStateChange` during token refresh, which would briefly flash the login screen to signed-in users.
+**Key:** No early returns. All screens (Auth, FamilySetup, main app) render inside the main return block, behind the splash overlay (z-50). This prevents an auth race condition where `getSession()` resolves before `onAuthStateChange` during token refresh, which would briefly flash the login screen to signed-in users. The `allDataReady` check handles all three states (no user, no family, full app) so the splash dismisses correctly regardless of auth state — previously it required `user && family` which caused the splash to hang indefinitely on desktop when not logged in.
 
 - [ ] **Step 3: Add SplashScreen overlay to the main render**
 

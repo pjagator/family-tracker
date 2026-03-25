@@ -52,6 +52,7 @@ A full-viewport component rendering:
 **Loading logic:**
 - All screens (Auth, FamilySetup, main app) render inside the main return block, behind the splash overlay (z-50)
 - No early returns — this prevents auth race conditions where `getSession()` resolves before `onAuthStateChange` during token refresh, which could briefly flash the login screen to signed-in users
+- `allDataReady` resolves to true once auth loading completes, regardless of auth state: no user (show login), user but no family (show setup), or full app ready (user + family + week loaded)
 - `splashReady = allDataReady && minTimeElapsed` — once true, triggers the exit animation
 - After SplashScreen calls `onComplete`, set `showSplash=false` to unmount it
 - Main app content (tabs, entry sheet, nav) guarded by `user && family` to prevent crashes during loading
