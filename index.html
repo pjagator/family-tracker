@@ -14,7 +14,50 @@
     <title>Alberts Family Tracker</title>
   </head>
   <body class="bg-white font-sans text-gray-900 antialiased">
-    <div id="root"></div>
+    <div id="root">
+      <!-- Static splash — replaced by React on hydration -->
+      <div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a2744">
+        <div style="display:flex;align-items:flex-end;gap:24px">
+          <svg width="80" height="90" viewBox="0 0 80 90">
+            <ellipse cx="40" cy="60" rx="22" ry="18" fill="#8B5E3C"/>
+            <circle cx="40" cy="32" r="16" fill="#8B5E3C"/>
+            <circle cx="24" cy="28" r="10" fill="#6D4C2A"/>
+            <circle cx="56" cy="28" r="10" fill="#6D4C2A"/>
+            <circle cx="40" cy="18" r="10" fill="#6D4C2A"/>
+            <ellipse cx="40" cy="38" rx="6" ry="4" fill="#7A5232"/>
+            <circle cx="40" cy="36" r="2.5" fill="#2a1a0a"/>
+            <circle cx="34" cy="30" r="2" fill="#2a1a0a"/>
+            <circle cx="46" cy="30" r="2" fill="#2a1a0a"/>
+            <rect x="26" y="72" width="7" height="14" rx="3" fill="#8B5E3C"/>
+            <rect x="47" y="72" width="7" height="14" rx="3" fill="#8B5E3C"/>
+            <circle cx="29" cy="82" r="5" fill="#6D4C2A"/>
+            <circle cx="51" cy="82" r="5" fill="#6D4C2A"/>
+            <path d="M62,55 Q75,40 68,28" stroke="#8B5E3C" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <circle cx="68" cy="28" r="6" fill="#6D4C2A"/>
+          </svg>
+          <svg width="65" height="75" viewBox="0 0 80 90">
+            <ellipse cx="40" cy="60" rx="22" ry="18" fill="#2a2a2a"/>
+            <circle cx="40" cy="32" r="16" fill="#2a2a2a"/>
+            <circle cx="24" cy="28" r="10" fill="#1a1a1a"/>
+            <circle cx="56" cy="28" r="10" fill="#1a1a1a"/>
+            <circle cx="40" cy="18" r="10" fill="#1a1a1a"/>
+            <ellipse cx="40" cy="38" rx="6" ry="4" fill="#222"/>
+            <circle cx="40" cy="36" r="2.5" fill="#111"/>
+            <circle cx="34" cy="30" r="2" fill="#ddd"/>
+            <circle cx="46" cy="30" r="2" fill="#ddd"/>
+            <rect x="26" y="72" width="7" height="14" rx="3" fill="#2a2a2a"/>
+            <rect x="47" y="72" width="7" height="14" rx="3" fill="#2a2a2a"/>
+            <circle cx="29" cy="82" r="5" fill="#1a1a1a"/>
+            <circle cx="51" cy="82" r="5" fill="#1a1a1a"/>
+            <path d="M62,55 Q75,40 68,28" stroke="#2a2a2a" stroke-width="5" fill="none" stroke-linecap="round"/>
+            <circle cx="68" cy="28" r="6" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div style="margin-top:24px;color:white;font-size:20px;font-weight:700;letter-spacing:0.5px;font-family:Inter,sans-serif">
+          Alberts Family Tracker
+        </div>
+      </div>
+    </div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
