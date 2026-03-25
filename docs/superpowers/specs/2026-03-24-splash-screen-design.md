@@ -41,6 +41,8 @@ A full-viewport component rendering:
 - `isReady: boolean` — all data loaded and min time elapsed
 - `onComplete: () => void` — called after exit animation finishes
 
+**Exit mechanism:** Uses `useRef` for both the exiting guard and the `onComplete` callback to prevent React re-renders from clearing the exit timer via useEffect cleanup. The `exiting` ref is checked (not state) to avoid re-triggering the effect; state is still set for CSS animation conditional rendering. Only `isReady` is a useEffect dependency.
+
 ### 2. App.jsx Changes
 
 **New state:**

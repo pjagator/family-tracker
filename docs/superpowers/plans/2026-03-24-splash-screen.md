@@ -79,10 +79,10 @@ git commit -m "feat: add splash screen CSS keyframe animations"
 - [ ] **Step 1: Create SplashScreen.jsx**
 
 ```jsx
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Brownie SVG (chocolate poodle, larger)
-function BrownieSvg() {
+export function BrownieSvg() {
   return (
     <svg width="80" height="90" viewBox="0 0 80 90">
       <ellipse cx="40" cy="60" rx="22" ry="18" fill="#8B5E3C"/>
@@ -107,7 +107,7 @@ function BrownieSvg() {
 }
 
 // Ursa Minor SVG (black poodle, smaller)
-function UrsaMinorSvg() {
+export function UrsaMinorSvg() {
   return (
     <svg width="65" height="75" viewBox="0 0 80 90">
       <ellipse cx="40" cy="60" rx="22" ry="18" fill="#2a2a2a"/>
@@ -133,17 +133,25 @@ function UrsaMinorSvg() {
 
 export default function SplashScreen({ isReady, onComplete }) {
   const [exiting, setExiting] = useState(false)
+  const exitingRef = useRef(false)
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
   useEffect(() => {
-    if (isReady && !exiting) {
+    if (isReady && !exitingRef.current) {
+      exitingRef.current = true
       setExiting(true)
       // Wait for run-off (0.4s) + fade (0.3s) to complete
       const timer = setTimeout(() => {
-        onComplete()
+        onCompleteRef.current()
       }, 700)
       return () => clearTimeout(timer)
     }
-  }, [isReady, exiting, onComplete])
+  }, [isReady])
+
+  // NOTE: exitingRef prevents setExiting from triggering a re-render
+  // that would clear the timer via useEffect cleanup. onCompleteRef
+  // prevents inline arrow function props from causing the same issue.
 
   return (
     <div
