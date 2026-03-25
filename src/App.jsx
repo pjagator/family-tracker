@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ToastProvider } from './components/ToastContext'
 import { useAuth } from './hooks/useAuth'
 import { useFamily } from './hooks/useFamily'
@@ -14,6 +14,7 @@ import EntrySheet from './components/EntrySheet'
 import RecurringManager from './components/RecurringManager'
 import CampView from './components/CampView'
 import BottomNav from './components/BottomNav'
+import SplashScreen from './components/SplashScreen'
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut, sendOtp, verifyOtp, resetPassword } = useAuth()
@@ -30,6 +31,14 @@ export default function App() {
 
   const [activeTab, setActiveTab] = useState('week')
   const [activeCell, setActiveCell] = useState(null)
+
+  const [showSplash, setShowSplash] = useState(true)
+  const [minTimeElapsed, setMinTimeElapsed] = useState(false)
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinTimeElapsed(true), 2000)
+    return () => clearTimeout(timer)
+  }, [])
 
   const [exportMsg, setExportMsg] = useState('')
 
@@ -79,27 +88,40 @@ export default function App() {
     await upsertEntry({ ...entry, is_complete: false, is_test: false })
   }
 
-  if (authLoading || (user && familyLoading)) {
+  // Not logged in - show auth with splash background (no splash animation)
+  if (!authLoading && !user) {
     return (
       <ToastProvider>
-        <div className="min-h-screen flex items-center justify-center bg-navy">
-          <div className="text-white text-sm animate-pulse">Loading...</div>
-        </div>
+        <Auth
+          onSignIn={signIn}
+          onSignUp={signUp}
+          onSendOtp={sendOtp}
+          onVerifyOtp={verifyOtp}
+          onResetPassword={resetPassword}
+        />
       </ToastProvider>
     )
   }
 
-  if (!user) {
-    return <ToastProvider><Auth onSignIn={signIn} onSignUp={signUp} onSendOtp={sendOtp} onVerifyOtp={verifyOtp} onResetPassword={resetPassword} /></ToastProvider>
-  }
-
-  if (!family) {
+  // Family setup (after login, before splash ends)
+  if (!authLoading && user && !familyLoading && !family) {
     return <ToastProvider><FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} /></ToastProvider>
   }
+
+  const allDataReady = !authLoading && user && !familyLoading && family && !weekLoading
+  const splashReady = allDataReady && minTimeElapsed
 
   return (
     <ToastProvider>
     <div className="min-h-screen bg-white">
+      {/* Splash screen overlay — covers everything with z-50 */}
+      {showSplash && (
+        <SplashScreen
+          isReady={splashReady}
+          onComplete={() => setShowSplash(false)}
+        />
+      )}
+
       {activeTab === 'week' && (
         <div className="animate-fadeIn">
           {weekLoading ? (
