@@ -43,6 +43,26 @@
   to { transform: translateX(0); opacity: 1; }
 }
 
+@keyframes poodleBounce {
+  from { transform: translateY(0); }
+  to { transform: translateY(-12px); }
+}
+
+@keyframes poodleRunLeft {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(-120vw); opacity: 1; }
+}
+
+@keyframes poodleRunRight {
+  from { transform: translateX(0); opacity: 1; }
+  to { transform: translateX(120vw); opacity: 1; }
+}
+
+@keyframes splashFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
