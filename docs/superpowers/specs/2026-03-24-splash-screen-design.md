@@ -48,20 +48,21 @@ A full-viewport component rendering:
 - `minTimeElapsed` (boolean, starts false, set true after 2s timer)
 
 **Loading logic:**
-- Splash shows while: `authLoading || (user && familyLoading) || (user && family && weekLoading) || !minTimeElapsed`
-- Once all conditions clear, set `isReady=true` on SplashScreen
-- After SplashScreen calls `onComplete`, set `showSplash=false`
-- Calendar renders underneath the splash (hidden by z-index) so it's ready when splash exits
+- All screens (Auth, FamilySetup, main app) render inside the main return block, behind the splash overlay (z-50)
+- No early returns — this prevents auth race conditions where `getSession()` resolves before `onAuthStateChange` during token refresh, which could briefly flash the login screen to signed-in users
+- `splashReady = allDataReady && minTimeElapsed` — once true, triggers the exit animation
+- After SplashScreen calls `onComplete`, set `showSplash=false` to unmount it
+- Main app content (tabs, entry sheet, nav) guarded by `user && family` to prevent crashes during loading
 
 **Auth integration:**
-- When `!user`: render Auth.jsx centered on top of splash background
+- Auth renders conditionally inside the main return (`showAuth` flag) — behind the splash overlay
 - Poodles visible behind the form at reduced opacity (~0.3), static (no bounce)
 - "Alberts Family Tracker" text visible above the form
-- On login success: form fades out, poodles become full opacity, start bouncing, normal load sequence continues
+- On login success: splash continues its loading animation while family/week data fetches, then runs off when ready
 
 **Removed:**
-- The "Loading..." navy screen (current lines 82-90)
-- The "Loading week..." banner (current line 106)
+- The "Loading..." navy screen (old early return)
+- All early returns from App.jsx — everything renders in the main return block behind the splash
 
 ### 3. index.html Static Splash
 

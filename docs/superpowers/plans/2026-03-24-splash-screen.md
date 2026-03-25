@@ -237,59 +237,24 @@ useEffect(() => {
 }, [])
 ```
 
-- [ ] **Step 2: Replace loading gates and compute splash readiness**
+- [ ] **Step 2: Remove all early returns and compute splash readiness**
 
-Delete the old loading early return (current lines 82-90):
-
-```jsx
-// DELETE THIS BLOCK:
-if (authLoading || (user && familyLoading)) {
-  return (
-    <ToastProvider>
-      <div className="min-h-screen flex items-center justify-center bg-navy">
-        <div className="text-white text-sm animate-pulse">Loading...</div>
-      </div>
-    </ToastProvider>
-  )
-}
-```
-
-Replace the `!user` and `!family` early returns (current lines 92-98) with:
-
-```jsx
-// Not logged in - show auth with splash background (no splash animation)
-if (!authLoading && !user) {
-  return (
-    <ToastProvider>
-      <Auth
-        onSignIn={signIn}
-        onSignUp={signUp}
-        onSendOtp={sendOtp}
-        onVerifyOtp={verifyOtp}
-        onResetPassword={resetPassword}
-      />
-    </ToastProvider>
-  )
-}
-
-// Family setup (after login, before splash ends)
-if (!authLoading && user && !familyLoading && !family) {
-  return <ToastProvider><FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} /></ToastProvider>
-}
-```
-
-Then before the main `return`, compute readiness:
+Delete ALL early returns (the old loading screen, `!user`, and `!family` blocks). Replace with inline computation before the main `return`:
 
 ```jsx
 const allDataReady = !authLoading && user && !familyLoading && family && !weekLoading
 const splashReady = allDataReady && minTimeElapsed
+
+// Determine what content to show beneath the splash
+const showAuth = !authLoading && !user
+const showFamilySetup = !authLoading && user && !familyLoading && !family
 ```
 
-**Key:** During `authLoading` or `familyLoading`, none of the early returns fire, so execution falls through to the main `return`. The splash overlay (z-50) covers the content beneath. The existing `weekLoading` ternary inside the main return handles displaying `"Loading week..."` underneath the splash — this is fine because the splash is opaque on top.
+**Key:** No early returns. All screens (Auth, FamilySetup, main app) render inside the main return block, behind the splash overlay (z-50). This prevents an auth race condition where `getSession()` resolves before `onAuthStateChange` during token refresh, which would briefly flash the login screen to signed-in users.
 
 - [ ] **Step 3: Add SplashScreen overlay to the main render**
 
-Add the SplashScreen component inside the main `return`, just inside the `<div className="min-h-screen bg-white">`:
+Restructure the main `return` to render Auth and FamilySetup conditionally inside (not as early returns), with a `user && family` guard around the main app content:
 
 ```jsx
 return (
@@ -303,23 +268,36 @@ return (
       />
     )}
 
-    {/* Everything below is UNCHANGED from the original */}
-    {activeTab === 'week' && (
-      <div className="animate-fadeIn">
-        {weekLoading ? (
-          <div className="bg-navy text-white px-4 py-8 text-center text-sm animate-pulse">Loading week...</div>
-        ) : (
-          <WeekView /* ... all existing props unchanged ... */ />
-        )}
-      </div>
+    {/* Auth screen (rendered behind splash when not logged in) */}
+    {showAuth && (
+      <Auth onSignIn={signIn} onSignUp={signUp} onSendOtp={sendOtp}
+            onVerifyOtp={verifyOtp} onResetPassword={resetPassword} />
     )}
-    {/* ... rest of tabs, EntrySheet, BottomNav all unchanged ... */}
+
+    {/* Family setup (rendered behind splash after login if no family) */}
+    {showFamilySetup && (
+      <FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} />
+    )}
+
+    {/* Main app content — only render when user and family exist */}
+    {user && family && <>
+      {activeTab === 'week' && (
+        <div className="animate-fadeIn">
+          {weekLoading ? (
+            <div className="bg-navy ...">Loading week...</div>
+          ) : (
+            <WeekView /* ... all existing props unchanged ... */ />
+          )}
+        </div>
+      )}
+      {/* ... rest of tabs, EntrySheet, BottomNav ... */}
+    </>}
   </div>
   </ToastProvider>
 )
 ```
 
-Do NOT modify the existing `weekLoading` ternary — the splash's `fixed inset-0 z-50` overlay covers it during initial load, and it's still needed for subsequent week navigation after the splash is gone.
+The `user && family` guard prevents crashes from accessing `family.name` or `user.email` during loading. The splash's `fixed inset-0 z-50` covers everything during initial load. The `weekLoading` ternary is unchanged — still needed for subsequent week navigation.
 
 - [ ] **Step 4: Verify build succeeds**
 
