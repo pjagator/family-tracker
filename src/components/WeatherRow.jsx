@@ -14,15 +14,16 @@ function weatherEmoji(code) {
   return '☁️'
 }
 
-export default function WeatherRow({ weekDates, gridCols }) {
+export default function WeatherRow({ weekDates, visibleDates, gridCols }) {
   const { weather, loading } = useWeather(weekDates)
+  const dates = visibleDates || weekDates
 
   return (
     <div className="grid" style={{ gridTemplateColumns: gridCols || '90px repeat(7, 1fr)' }}>
       <div className="bg-gray-50 border border-slate-300 p-1.5 text-[11px] font-medium text-slate sticky left-0 z-10 flex items-center justify-center">
         Weather
       </div>
-      {weekDates.map((date) => {
+      {dates.map((date) => {
         const w = weather[date]
         return (
           <div
