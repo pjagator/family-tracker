@@ -52,11 +52,13 @@ export function UrsaMinorSvg() {
 
 export default function SplashScreen({ isReady, onComplete }) {
   const [exiting, setExiting] = useState(false)
+  const exitingRef = useRef(false)
   const onCompleteRef = useRef(onComplete)
   onCompleteRef.current = onComplete
 
   useEffect(() => {
-    if (isReady && !exiting) {
+    if (isReady && !exitingRef.current) {
+      exitingRef.current = true
       setExiting(true)
       // Wait for run-off (0.4s) + fade (0.3s) to complete
       const timer = setTimeout(() => {
@@ -64,7 +66,7 @@ export default function SplashScreen({ isReady, onComplete }) {
       }, 700)
       return () => clearTimeout(timer)
     }
-  }, [isReady, exiting])
+  }, [isReady])
 
   return (
     <div
