@@ -88,28 +88,12 @@ export default function App() {
     await upsertEntry({ ...entry, is_complete: false, is_test: false })
   }
 
-  // Not logged in - show auth with splash background (no splash animation)
-  if (!authLoading && !user) {
-    return (
-      <ToastProvider>
-        <Auth
-          onSignIn={signIn}
-          onSignUp={signUp}
-          onSendOtp={sendOtp}
-          onVerifyOtp={verifyOtp}
-          onResetPassword={resetPassword}
-        />
-      </ToastProvider>
-    )
-  }
-
-  // Family setup (after login, before splash ends)
-  if (!authLoading && user && !familyLoading && !family) {
-    return <ToastProvider><FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} /></ToastProvider>
-  }
-
   const allDataReady = !authLoading && user && !familyLoading && family && !weekLoading
   const splashReady = allDataReady && minTimeElapsed
+
+  // Determine what content to show beneath the splash
+  const showAuth = !authLoading && !user
+  const showFamilySetup = !authLoading && user && !familyLoading && !family
 
   return (
     <ToastProvider>
@@ -122,6 +106,24 @@ export default function App() {
         />
       )}
 
+      {/* Auth screen (rendered behind splash when not logged in) */}
+      {showAuth && (
+        <Auth
+          onSignIn={signIn}
+          onSignUp={signUp}
+          onSendOtp={sendOtp}
+          onVerifyOtp={verifyOtp}
+          onResetPassword={resetPassword}
+        />
+      )}
+
+      {/* Family setup (rendered behind splash after login if no family) */}
+      {showFamilySetup && (
+        <FamilySetup onCreateFamily={createFamily} onJoinFamily={joinFamily} />
+      )}
+
+      {/* Main app content — only render when user and family exist */}
+      {user && family && <>
       {activeTab === 'week' && (
         <div className="animate-fadeIn">
           {weekLoading ? (
@@ -206,6 +208,7 @@ export default function App() {
       />
 
       <BottomNav active={activeTab} onNavigate={setActiveTab} />
+      </>}
     </div>
     </ToastProvider>
   )
