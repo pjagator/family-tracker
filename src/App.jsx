@@ -88,7 +88,11 @@ export default function App() {
     await upsertEntry({ ...entry, is_complete: false, is_test: false })
   }
 
-  const allDataReady = !authLoading && user && !familyLoading && family && !weekLoading
+  const allDataReady = !authLoading && (
+    !user ||                                          // auth resolved, no user → show login
+    (!familyLoading && !family) ||                    // user exists but no family → show setup
+    (!familyLoading && family && !weekLoading)         // full app ready
+  )
   const splashReady = allDataReady && minTimeElapsed
 
   // Determine what content to show beneath the splash
