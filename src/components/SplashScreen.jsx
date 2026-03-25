@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 // Brownie SVG (chocolate poodle, larger)
 export function BrownieSvg() {
@@ -52,17 +52,19 @@ export function UrsaMinorSvg() {
 
 export default function SplashScreen({ isReady, onComplete }) {
   const [exiting, setExiting] = useState(false)
+  const onCompleteRef = useRef(onComplete)
+  onCompleteRef.current = onComplete
 
   useEffect(() => {
     if (isReady && !exiting) {
       setExiting(true)
       // Wait for run-off (0.4s) + fade (0.3s) to complete
       const timer = setTimeout(() => {
-        onComplete()
+        onCompleteRef.current()
       }, 700)
       return () => clearTimeout(timer)
     }
-  }, [isReady, exiting, onComplete])
+  }, [isReady, exiting])
 
   return (
     <div
