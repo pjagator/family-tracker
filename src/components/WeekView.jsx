@@ -9,15 +9,11 @@ export default function WeekView({
   entries, onPrev, onNext, onToday, onCellTap, onAllieToggle, getEntry,
   words, onSaveWords,
 }) {
-  const mobile = useMobileView(weekDates)
+  const { isMobile } = useMobileView()
 
   const { onTouchStart, onTouchEnd } = useSwipe({
-    onSwipeLeft: mobile.isMobile
-      ? (mobile.canSlideRight ? mobile.slideRight : onNext)
-      : onNext,
-    onSwipeRight: mobile.isMobile
-      ? (mobile.canSlideLeft ? mobile.slideLeft : onPrev)
-      : onPrev,
+    onSwipeLeft: onNext,
+    onSwipeRight: onPrev,
   })
 
   return (
@@ -38,9 +34,7 @@ export default function WeekView({
             onPrev={onPrev}
             onNext={onNext}
             onToday={onToday}
-            isMobile={mobile.isMobile}
-            visibleDates={mobile.visibleDates}
-            startIdx={mobile.startIdx}
+            isMobile={isMobile}
           />
 
           {/* Lucia's weekly words */}
