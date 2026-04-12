@@ -13,6 +13,29 @@ const SCHOOL_CATEGORIES = new Set([
   'math', 'science', 'ela', 'ss', 'spanish', 'religion', 'homework', 'specials',
 ])
 
+// Detect URLs in text and return an array of { type: 'text'|'link', value: string } segments
+function linkifyContent(text) {
+  if (!text) return []
+  const urlRegex = /(https?:\/\/[^\s<]+)/g
+  const segments = []
+  let lastIndex = 0
+  let match
+
+  while ((match = urlRegex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      segments.push({ type: 'text', value: text.slice(lastIndex, match.index) })
+    }
+    segments.push({ type: 'link', value: match[0] })
+    lastIndex = match.index + match[0].length
+  }
+
+  if (lastIndex < text.length) {
+    segments.push({ type: 'text', value: text.slice(lastIndex) })
+  }
+
+  return segments
+}
+
 export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
   const showToast = useToast()
   const [content, setContent] = useState('')
@@ -105,6 +128,28 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
             rows={3}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-navy resize-none"
           />
+
+          {/* Clickable link preview */}
+          {content && linkifyContent(content).some(s => s.type === 'link') && (
+            <div className="mt-2 px-3 py-2 bg-gray-50 rounded-lg text-sm leading-relaxed break-words">
+              {linkifyContent(content).map((segment, i) =>
+                segment.type === 'link' ? (
+                  <a
+                    key={i}
+                    href={segment.value}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline break-all inline-block min-h-[44px] leading-[44px]"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {segment.value}
+                  </a>
+                ) : (
+                  <span key={i}>{segment.value}</span>
+                )
+              )}
+            </div>
+          )}
 
           {/* Toggles — only for school subject rows */}
           {SCHOOL_CATEGORIES.has(cell.category) && (
