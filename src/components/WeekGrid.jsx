@@ -306,7 +306,7 @@ export default function WeekGrid({
         </div>
 
         {/* Weather row */}
-        <WeatherRow weekDates={weekDates} visibleDates={weekDates} gridCols={gridCols} />
+        <WeatherRow weekDates={weekDates} gridCols={gridCols} />
         </div>{/* end sticky header */}
 
         {/* Click outside to close picker */}
