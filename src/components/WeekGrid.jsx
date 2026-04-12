@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import EntryCell from './EntryCell'
 import WeatherRow from './WeatherRow'
 import WeekNav from './WeekNav'
@@ -108,17 +108,28 @@ export default function WeekGrid({
   onDayNumberChange, onToggleGlobalNoSchool, onTogglePersonNoSchool,
   onCellTap, onAllieToggle, getEntry,
   onPrev, onNext, onToday,
-  // Mobile props
-  isMobile, visibleDates: visDates, startIdx,
+  isMobile,
 }) {
   const today = new Date().toISOString().split('T')[0]
   const globalSet = new Set(globalNoSchool || [])
+  const scrollRef = useRef(null)
 
-  // Use visible dates on mobile, full week on desktop
-  const visibleDates = visDates || weekDates
+  // Always show all 7 days — CSS scroll handles mobile panning
   const gridCols = isMobile
-    ? `72px repeat(${visibleDates.length}, 1fr)`
+    ? '72px repeat(7, minmax(100px, 1fr))'
     : '90px repeat(7, 1fr)'
+
+  // Auto-scroll to today's column on mount and week change
+  useEffect(() => {
+    if (!isMobile || !scrollRef.current) return
+    const todayIdx = weekDates.indexOf(today)
+    if (todayIdx < 0) return
+    const container = scrollRef.current
+    const columnWidth = container.scrollWidth / 8 // 1 label col + 7 day cols
+    // Scroll so today is roughly centered
+    const scrollTo = columnWidth * Math.max(0, todayIdx)
+    container.scrollTo({ left: scrollTo, behavior: 'smooth' })
+  }, [weekDates[0], isMobile])
 
   const [openSections, setOpenSections] = useState(() => {
     const init = {}
@@ -199,28 +210,25 @@ export default function WeekGrid({
 
   return (
     <div>
-      <div className={isMobile ? '' : 'min-w-[600px]'}>
+      <div
+        ref={scrollRef}
+        className={isMobile
+          ? 'overflow-x-auto scroll-smooth snap-x snap-mandatory'
+          : 'min-w-[600px]'
+        }
+        style={isMobile ? { WebkitOverflowScrolling: 'touch' } : undefined}
+      >
+        <div className={isMobile ? 'min-w-[800px]' : ''}>
 
         {/* Sticky header: week nav + date row + weather */}
         <div className="sticky top-0 z-20 bg-white shadow-[0_2px_4px_rgba(0,0,0,0.06)]">
         <WeekNav weekDates={weekDates} onPrev={onPrev} onNext={onNext} onToday={onToday} />
 
-        {/* Mobile day indicator dots */}
-        {isMobile && (
-          <div className="flex justify-center gap-1.5 py-1.5 bg-navy">
-            {weekDates.map((_, i) => (
-              <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors ${
-                i >= startIdx && i < startIdx + visibleDates.length ? 'bg-white' : 'bg-white/30'
-              }`} />
-            ))}
-          </div>
-        )}
-
         <div className="grid" style={{ gridTemplateColumns: gridCols }}>
           <div className="bg-gray-100 border border-slate-300 p-1.5 sticky left-0 z-20 text-[10px] text-slate text-center">
             Day #
           </div>
-          {visibleDates.map((date) => {
+          {weekDates.map((date) => {
             const d = new Date(date + 'T00:00:00')
             const isToday = date === today
             const isWeekend = isWeekendDate(date)
@@ -229,7 +237,7 @@ export default function WeekGrid({
             return (
               <div
                 key={date}
-                className={`border border-slate-300 p-1 text-center text-[11px] font-semibold relative ${
+                className={`border border-slate-300 p-1 text-center text-[11px] font-semibold relative snap-start ${
                   isGlobalOff ? 'bg-gray-200 text-gray-400'
                   : isToday ? 'bg-today text-navy'
                   : isWeekend ? 'bg-weekend text-slate'
@@ -298,7 +306,7 @@ export default function WeekGrid({
         </div>
 
         {/* Weather row */}
-        <WeatherRow weekDates={weekDates} visibleDates={visibleDates} gridCols={gridCols} />
+        <WeatherRow weekDates={weekDates} visibleDates={weekDates} gridCols={gridCols} />
         </div>{/* end sticky header */}
 
         {/* Click outside to close picker */}
@@ -334,7 +342,7 @@ export default function WeekGrid({
                   </span>
                 </button>
                 {/* Per-person "Out" toggles for each day (children only) */}
-                {visibleDates.map((date) => {
+                {weekDates.map((date) => {
                   const isWeekend = isWeekendDate(date)
                   const isGlobalOff = globalSet.has(date)
                   const isPersonalOff = (personNoSchool?.[person.key] || []).includes(date)
@@ -395,7 +403,7 @@ export default function WeekGrid({
                           >
                             {label}
                           </div>
-                          {visibleDates.map((date) => {
+                          {weekDates.map((date) => {
                             const entry = getEntry('allie', 'work', date)
                             const val = entry?.content || ''
                             const isToday = date === today
@@ -439,7 +447,7 @@ export default function WeekGrid({
                         >
                           {label}
                         </div>
-                        {visibleDates.map((date) => {
+                        {weekDates.map((date) => {
                           const entry = getDisplayEntry(person.key, cat, date)
                           const rawEntry = getEntry(person.key, cat, date)
                           const isToday = date === today
@@ -494,6 +502,7 @@ export default function WeekGrid({
             </div>
           )
         })}
+        </div>
       </div>
     </div>
   )
