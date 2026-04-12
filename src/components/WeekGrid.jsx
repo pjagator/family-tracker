@@ -12,6 +12,8 @@ const SPECIALS_ROTATION = {
   4: 'Spanish',
   5: 'Library Research',
   6: 'Art & PE',
+  7: 'Science',
+  8: 'Spanish, Science',
 }
 
 const BEAU_ODD_DAYS = new Set(['math', 'religion'])

@@ -13,8 +13,8 @@ const SPECIALS_ROTATION = {
   4: 'Spanish',
   5: 'Library Research',
   6: 'Art & PE',
-  7: '(varies)',
-  8: '(varies)',
+  7: 'Science',
+  8: 'Spanish, Science',
 }
 
 const DAY_ABBRS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
