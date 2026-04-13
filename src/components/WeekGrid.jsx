@@ -213,7 +213,7 @@ export default function WeekGrid({
       <div
         ref={scrollRef}
         className={isMobile
-          ? 'overflow-x-auto scroll-smooth snap-x snap-mandatory'
+          ? 'overflow-x-auto scroll-smooth snap-x snap-proximity'
           : 'min-w-[600px]'
         }
         style={isMobile ? { WebkitOverflowScrolling: 'touch' } : undefined}
