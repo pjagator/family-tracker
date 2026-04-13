@@ -11,13 +11,15 @@ export default function WeekView({
 }) {
   const { isMobile } = useMobileView()
 
+  // On mobile, CSS scroll-snap handles within-week scrolling — no swipe for week nav
+  // On desktop, swipe still changes weeks
   const { onTouchStart, onTouchEnd } = useSwipe({
-    onSwipeLeft: onNext,
-    onSwipeRight: onPrev,
+    onSwipeLeft: isMobile ? null : onNext,
+    onSwipeRight: isMobile ? null : onPrev,
   })
 
   return (
-    <div className="pb-20" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
+    <div className="pb-20" onTouchStart={isMobile ? undefined : onTouchStart} onTouchEnd={isMobile ? undefined : onTouchEnd}>
       {weekDates.length > 0 && (
         <>
           <WeekGrid
