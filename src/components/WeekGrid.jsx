@@ -213,7 +213,7 @@ export default function WeekGrid({
       <div
         ref={scrollRef}
         className={isMobile
-          ? 'overflow-x-auto scroll-smooth snap-x snap-proximity'
+          ? 'overflow-x-auto'
           : 'min-w-[600px]'
         }
         style={isMobile ? { WebkitOverflowScrolling: 'touch' } : undefined}
@@ -237,7 +237,7 @@ export default function WeekGrid({
             return (
               <div
                 key={date}
-                className={`border border-slate-300 p-1 text-center text-[11px] font-semibold relative snap-start ${
+                className={`border border-slate-300 p-1 text-center text-[11px] font-semibold relative ${
                   isGlobalOff ? 'bg-gray-200 text-gray-400'
                   : isToday ? 'bg-today text-navy'
                   : isWeekend ? 'bg-weekend text-slate'
