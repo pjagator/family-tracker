@@ -1,4 +1,4 @@
-const CACHE_VERSION = '20260324a'
+const CACHE_VERSION = '20260823a'
 const CACHE_NAME = `family-tracker-${CACHE_VERSION}`
 const SHELL_URLS = ['/', '/index.html']
 
@@ -35,17 +35,17 @@ self.addEventListener('fetch', (event) => {
     return
   }
 
-  // Cache-first with network fallback for weather API (1hr expiry handled client-side)
+  // Network-first for weather — the client already caches in localStorage with
+  // a 1hr expiry; cache-first here made the forecast permanently stale per week.
   if (url.hostname.includes('open-meteo.com')) {
     event.respondWith(
-      caches.match(event.request).then((cached) => {
-        if (cached) return cached
-        return fetch(event.request).then((res) => {
+      fetch(event.request)
+        .then((res) => {
           const clone = res.clone()
           caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone))
           return res
         })
-      })
+        .catch(() => caches.match(event.request))
     )
     return
   }

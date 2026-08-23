@@ -36,7 +36,14 @@ export default function App() {
   const [minTimeElapsed, setMinTimeElapsed] = useState(false)
 
   useEffect(() => {
-    const timer = setTimeout(() => setMinTimeElapsed(true), 2000)
+    // Full 2s splash only on cold start; repeat opens in the same browser
+    // session get 400ms so speed of entry isn't taxed every open.
+    let seen = false
+    try { seen = sessionStorage.getItem('ft_splash_seen') === '1' } catch { /* private mode */ }
+    const timer = setTimeout(() => {
+      setMinTimeElapsed(true)
+      try { sessionStorage.setItem('ft_splash_seen', '1') } catch { /* ignore */ }
+    }, seen ? 400 : 2000)
     return () => clearTimeout(timer)
   }, [])
 

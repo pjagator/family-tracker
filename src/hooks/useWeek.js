@@ -10,8 +10,13 @@ function getMonday(date) {
   return d
 }
 
+// Local-time date string (YYYY-MM-DD). toISOString() is UTC, which rolls to
+// tomorrow after 8pm Eastern and broke "today" logic in the evening.
 function formatDate(d) {
-  return d.toISOString().split('T')[0]
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
 }
 
 function addDays(d, n) {
@@ -187,11 +192,14 @@ export function useWeek(familyId) {
     } else {
       // Auto-populate recurring for existing weeks (today + future dates only)
       const today = formatDate(new Date())
-      const { data: recurring } = await supabase
-        .from('recurring')
-        .select('*')
-        .eq('family_id', familyId)
-        .eq('is_active', true)
+      // Past weeks can never gain recurring entries — skip the extra queries
+      const { data: recurring } = dates[6] >= today
+        ? await supabase
+            .from('recurring')
+            .select('*')
+            .eq('family_id', familyId)
+            .eq('is_active', true)
+        : { data: null }
 
       if (recurring?.length) {
         // Get existing entries for this week to avoid duplicates
