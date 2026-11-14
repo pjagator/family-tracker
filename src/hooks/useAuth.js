@@ -1,21 +1,35 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
+import { cacheClearAll } from '../lib/cache'
 
 export function useAuth() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    let active = true
+    const settle = (session) => {
+      if (!active) return
       setUser(session?.user ?? null)
       setLoading(false)
-    })
+    }
 
+    // Whichever answers first wins. A failed session check shows the sign-in
+    // screen instead of leaving the splash up forever.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      settle(session)
     })
+    supabase.auth.getSession()
+      .then(({ data }) => settle(data?.session ?? null))
+      .catch((err) => {
+        console.error('Session check failed:', err)
+        settle(null)
+      })
 
-    return () => subscription.unsubscribe()
+    return () => {
+      active = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email, password) => {
@@ -28,7 +42,10 @@ export function useAuth() {
     return { error }
   }
 
-  const signOut = () => supabase.auth.signOut()
+  const signOut = async () => {
+    cacheClearAll()
+    return supabase.auth.signOut()
+  }
 
   const sendOtp = async (email) => {
     const { error } = await supabase.auth.signInWithOtp({ email })

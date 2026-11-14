@@ -1,12 +1,18 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { cacheGet, cacheSet } from '../lib/cache'
+import { useResume } from './useResume'
 
 export function useEntries(weekId, familyId) {
   const [entries, setEntries] = useState([])
   const [loading, setLoading] = useState(false)
+  // True when the last refresh failed and the screen shows a saved copy.
+  const [stale, setStale] = useState(false)
+  const requestRef = useRef(0)
 
   const loadEntries = useCallback(async () => {
     if (!weekId || !familyId) return
+    const requestId = ++requestRef.current
     setLoading(true)
 
     const { data, error } = await supabase
@@ -16,15 +22,26 @@ export function useEntries(weekId, familyId) {
       .eq('family_id', familyId)
       .order('sort_order', { ascending: true })
 
-    if (error) console.error('Failed to load entries:', error)
-    else setEntries(data || [])
+    // A newer request (week change, quick double refresh) supersedes this one.
+    if (requestId !== requestRef.current) return
+
+    if (error) {
+      console.error('Failed to load entries:', error)
+      setStale(true)
+    } else {
+      setEntries(data || [])
+      setStale(false)
+      cacheSet(`entries_${weekId}`, data || [])
+    }
     setLoading(false)
   }, [weekId, familyId])
 
-  // Initial load
+  // Show the saved copy for this week right away, then refresh from the server.
   useEffect(() => {
+    if (!weekId || !familyId) return
+    setEntries(cacheGet(`entries_${weekId}`) || [])
     loadEntries()
-  }, [loadEntries])
+  }, [weekId, familyId, loadEntries])
 
   // Realtime subscription -- listen for changes from other family members
   useEffect(() => {
@@ -45,12 +62,18 @@ export function useEntries(weekId, familyId) {
           loadEntries()
         }
       )
-      .subscribe()
+      .subscribe((status) => {
+        // After a dropped connection is restored, catch up on anything missed.
+        if (status === 'SUBSCRIBED') loadEntries()
+      })
 
     return () => {
       supabase.removeChannel(channel)
     }
   }, [weekId, familyId, loadEntries])
+
+  // Realtime cannot be trusted across a phone sleep: refetch on return.
+  useResume(loadEntries)
 
   const upsertEntry = async (entry) => {
     if (entry.id) {
@@ -114,5 +137,5 @@ export function useEntries(weekId, familyId) {
     return entries.find(e => e.person === person && e.category === category && e.date === date) || null
   }
 
-  return { entries, loading, upsertEntry, deleteEntry, getEntry, reload: loadEntries }
+  return { entries, loading, stale, upsertEntry, deleteEntry, getEntry, reload: loadEntries }
 }

@@ -24,7 +24,12 @@ Env: `.env.local` needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (also set i
 - `src/hooks/useWeek.js` — week load/create, day numbers (rotating 1–8), no-school,
   recurring auto-population, week navigation
 - `src/hooks/useEntries.js` — entries CRUD + realtime subscription (reload on change)
-- `public/sw.js` — hand-rolled service worker. Bump CACHE_VERSION on any SW change.
+- `public/sw.js` — service worker for the app shell only (page + hashed assets). It must
+  never intercept Supabase or other cross-origin requests. The cache name is stamped
+  with a build id by `vite.config.js`; there is nothing to bump by hand.
+- `src/lib/cache.js` — localStorage saved copies (family, week, entries) painted before
+  the network answers. `src/hooks/useResume.js` refetches when the app returns to the
+  foreground; realtime alone is not reliable on iPhone.
 
 ## Database schema (actual — family-scoped, NOT user-scoped)
 
@@ -57,8 +62,13 @@ key client-side, never service role.
 
 - Dates are LOCAL YYYY-MM-DD strings everywhere. Never use toISOString() for dates —
   it is UTC and flips to tomorrow after 8pm Eastern. Use the formatDate helper pattern.
-- Weather: localStorage cache (1hr expiry, forever for past weeks); SW is network-first
-  for open-meteo — keep it that way or the forecast goes stale.
+- Weather: localStorage cache (1hr expiry, forever for past weeks); the SW does not
+  touch open-meteo.
+- Every Supabase request has a 15s timeout (`src/lib/supabase.js`). A failed load must
+  show a retry, never a blank screen and never the create-a-family screen.
+- Deploys: run `npm ci` before pushing. If it fails, Vercel fails too and the live site
+  silently stays on the old build (this happened Aug 2026, eslint 10 peer conflict).
+  Settings shows the running build version.
 - Splash: 2s on cold start only, 400ms after (sessionStorage `ft_splash_seen`).
 - Tests/quizzes must visually pop (terracotta); today's column always highlighted.
 - Mobile rules: 44px touch targets, 16px font minimum on inputs (iOS zoom), no

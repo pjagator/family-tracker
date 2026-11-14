@@ -1,5 +1,7 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { supabase } from '../lib/supabase'
+import { cacheGet, cacheSet } from '../lib/cache'
+import { useResume } from './useResume'
 
 function getMonday(date) {
   const d = new Date(date)
@@ -79,6 +81,49 @@ function getLastDayNum(dayNumbers, wkDays, globalNoSchool) {
   return null
 }
 
+// Which recurring items should be added to this week. `fromDate` limits fill to
+// today onward for weeks that already exist; `taken` holds person|category|date
+// keys that already have an entry.
+function buildRecurringEntries(recurring, dates, { familyId, weekId, fromDate, taken }) {
+  const out = []
+  for (const item of recurring) {
+    const effectiveStart = item.start_date || (item.created_at ? item.created_at.split('T')[0] : '2000-01-01')
+    const effectiveEnd = item.end_date || '9999-12-31'
+    const matchDate = dates.find(d =>
+      new Date(d + 'T00:00:00').getDay() === item.day_of_week
+      && (!fromDate || d >= fromDate)
+      && d >= effectiveStart
+      && d <= effectiveEnd
+    )
+    if (!matchDate) continue
+    const key = `${item.person}|${item.category}|${matchDate}`
+    if (taken.has(key)) continue
+    taken.add(key)
+    out.push({
+      family_id: familyId,
+      week_id: weekId,
+      date: matchDate,
+      person: item.person,
+      category: item.category,
+      content: item.content,
+    })
+  }
+  return out
+}
+
+// Fetch the week row. Tolerates duplicates (oldest row wins) instead of
+// failing, which is what .single() did when two phones created the same week.
+async function fetchWeek(familyId, startDate) {
+  const { data, error } = await supabase
+    .from('weeks')
+    .select('*')
+    .eq('family_id', familyId)
+    .eq('start_date', startDate)
+    .order('id', { ascending: true })
+    .limit(1)
+  return { week: data?.[0] || null, error }
+}
+
 export function useWeek(familyId) {
   const [week, setWeek] = useState(null)
   const [weekDates, setWeekDates] = useState([])
@@ -86,37 +131,64 @@ export function useWeek(familyId) {
   const [globalNoSchool, setGlobalNoSchoolState] = useState([])
   const [personNoSchool, setPersonNoSchoolState] = useState({})
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
   const [currentMonday, setCurrentMonday] = useState(() => getMonday(new Date()))
+  const requestRef = useRef(0)
 
-  const loadOrCreateWeek = useCallback(async (monday) => {
+  const loadOrCreateWeek = useCallback(async (monday, { silent = false } = {}) => {
     if (!familyId) return
-    setLoading(true)
+    const requestId = ++requestRef.current
+    const isCurrent = () => requestId === requestRef.current
 
     const startDate = formatDate(monday)
     const endDate = formatDate(addDays(monday, 6))
-
     const dates = []
     for (let i = 0; i < 7; i++) {
       dates.push(formatDate(addDays(monday, i)))
     }
 
-    let { data, error } = await supabase
-      .from('weeks')
-      .select('*')
-      .eq('family_id', familyId)
-      .eq('start_date', startDate)
-      .single()
+    const apply = (data) => {
+      setWeek(data)
+      setWeekDates(dates)
+      setDayNumbersState(data.day_numbers || {})
+      setGlobalNoSchoolState(data.global_no_school || [])
+      setPersonNoSchoolState(data.person_no_school || {})
+      setError(null)
+      setLoading(false)
+    }
 
-    if (error && error.code === 'PGRST116') {
-      // Carry over from previous week
+    // Paint the saved copy first; refresh from the server underneath.
+    const cacheKey = `week_${familyId}_${startDate}`
+    const cached = cacheGet(cacheKey)
+    if (!silent) {
+      if (cached) apply(cached)
+      else setLoading(true)
+    }
+
+    const fail = (err, what) => {
+      console.error(what, err)
+      if (!isCurrent()) return
+      // Keep whatever is on screen if we have it; otherwise surface the error
+      // so the UI can offer a retry instead of a blank page.
+      if (!cached && !silent) {
+        setWeek(null)
+        setWeekDates(dates)
+        setError(err)
+      }
+      setLoading(false)
+    }
+
+    let { week: data, error: loadErr } = await fetchWeek(familyId, startDate)
+    if (loadErr) return fail(loadErr, 'Failed to load week:')
+    if (!isCurrent()) return
+
+    const today = formatDate(new Date())
+    let isNewWeek = false
+
+    if (!data) {
+      // Carry day numbers over from the previous week
       const prevMonday = addDays(monday, -7)
-      const prevStartDate = formatDate(prevMonday)
-      const { data: prevWeek } = await supabase
-        .from('weeks')
-        .select('day_numbers, global_no_school, start_date')
-        .eq('family_id', familyId)
-        .eq('start_date', prevStartDate)
-        .single()
+      const { week: prevWeek } = await fetchWeek(familyId, formatDate(prevMonday))
 
       let autoDayNumbers = {}
       if (prevWeek?.day_numbers) {
@@ -145,13 +217,19 @@ export function useWeek(familyId) {
         .single()
 
       if (createErr) {
-        console.error('Failed to create week:', createErr)
-        setLoading(false)
-        return
+        // Most likely the other parent's phone created it a moment ago.
+        const retry = await fetchWeek(familyId, startDate)
+        if (!retry.week) return fail(createErr, 'Failed to create week:')
+        data = retry.week
+      } else {
+        data = created
+        isNewWeek = true
       }
-      data = created
+    }
 
-      // Auto-populate from recurring activities
+    // Auto-populate recurring activities. New weeks get the whole week; existing
+    // weeks only today onward; past weeks never gain entries, so skip the queries.
+    if (isNewWeek || dates[6] >= today) {
       const { data: recurring } = await supabase
         .from('recurring')
         .select('*')
@@ -159,98 +237,57 @@ export function useWeek(familyId) {
         .eq('is_active', true)
 
       if (recurring?.length) {
-        const autoEntries = []
-        for (const item of recurring) {
-          const effectiveStart = item.start_date || (item.created_at ? item.created_at.split('T')[0] : '2000-01-01')
-          const effectiveEnd = item.end_date || '9999-12-31'
-          // Find the date in this week that matches the day_of_week
-          const matchDate = dates.find(d =>
-            new Date(d + 'T00:00:00').getDay() === item.day_of_week
-            && d >= effectiveStart
-            && d <= effectiveEnd
-          )
-          if (matchDate) {
-            autoEntries.push({
-              family_id: familyId,
-              week_id: data.id,
-              date: matchDate,
-              person: item.person,
-              category: item.category,
-              content: item.content,
-            })
-          }
-        }
-        if (autoEntries.length) {
-          const { error: entryErr } = await supabase.from('entries').insert(autoEntries)
-          if (entryErr) console.error('Failed to auto-populate recurring:', entryErr)
-        }
-      }
-    } else if (error) {
-      console.error('Failed to load week:', error)
-      setLoading(false)
-      return
-    } else {
-      // Auto-populate recurring for existing weeks (today + future dates only)
-      const today = formatDate(new Date())
-      // Past weeks can never gain recurring entries — skip the extra queries
-      const { data: recurring } = dates[6] >= today
-        ? await supabase
-            .from('recurring')
-            .select('*')
-            .eq('family_id', familyId)
-            .eq('is_active', true)
-        : { data: null }
-
-      if (recurring?.length) {
-        // Get existing entries for this week to avoid duplicates
-        const { data: existingEntries } = await supabase
+        const { data: existingEntries, error: existingErr } = await supabase
           .from('entries')
           .select('person, category, date')
           .eq('week_id', data.id)
 
-        const existingSet = new Set(
-          (existingEntries || []).map(e => `${e.person}|${e.category}|${e.date}`)
-        )
-
-        const autoEntries = []
-        for (const item of recurring) {
-          const effectiveStart = item.start_date || (item.created_at ? item.created_at.split('T')[0] : '2000-01-01')
-          const effectiveEnd = item.end_date || '9999-12-31'
-
-          const matchDate = dates.find(d =>
-            new Date(d + 'T00:00:00').getDay() === item.day_of_week
-            && d >= today
-            && d >= effectiveStart
-            && d <= effectiveEnd
+        // If we cannot see what is already there, do not add anything: adding
+        // blind is how duplicate recurring entries appear.
+        if (!existingErr) {
+          const taken = new Set(
+            (existingEntries || []).map(e => `${e.person}|${e.category}|${e.date}`)
           )
-          if (matchDate && !existingSet.has(`${item.person}|${item.category}|${matchDate}`)) {
-            autoEntries.push({
-              family_id: familyId,
-              week_id: data.id,
-              date: matchDate,
-              person: item.person,
-              category: item.category,
-              content: item.content,
-            })
+          const autoEntries = buildRecurringEntries(recurring, dates, {
+            familyId,
+            weekId: data.id,
+            fromDate: isNewWeek ? null : today,
+            taken,
+          })
+          if (autoEntries.length) {
+            const { error: entryErr } = await supabase.from('entries').insert(autoEntries)
+            if (entryErr) console.error('Failed to auto-populate recurring:', entryErr)
           }
-        }
-        if (autoEntries.length) {
-          await supabase.from('entries').insert(autoEntries)
         }
       }
     }
 
-    setWeek(data)
-    setWeekDates(dates)
-    setDayNumbersState(data.day_numbers || {})
-    setGlobalNoSchoolState(data.global_no_school || [])
-    setPersonNoSchoolState(data.person_no_school || {})
-    setLoading(false)
+    cacheSet(cacheKey, data)
+    if (!isCurrent()) return
+    apply(data)
   }, [familyId])
 
   useEffect(() => {
     loadOrCreateWeek(currentMonday)
   }, [currentMonday, loadOrCreateWeek])
+
+  // Coming back to the app: refresh quietly, and if the phone sat on what was
+  // "this week" across a Sunday night, roll forward to the real current week.
+  const lastTodayRef = useRef(formatDate(new Date()))
+  useResume(() => {
+    const today = formatDate(new Date())
+    const dayChanged = today !== lastTodayRef.current
+    lastTodayRef.current = today
+    const realMonday = getMonday(new Date())
+    if (dayChanged && formatDate(realMonday) !== formatDate(currentMonday)
+        && formatDate(addDays(currentMonday, 7)) === formatDate(realMonday)) {
+      setCurrentMonday(realMonday)
+    } else {
+      loadOrCreateWeek(currentMonday, { silent: true })
+    }
+  })
+
+  const reload = () => loadOrCreateWeek(currentMonday)
 
   const persistWeek = async (updates) => {
     const { error } = await supabase
@@ -258,6 +295,12 @@ export function useWeek(familyId) {
       .update(updates)
       .eq('id', week.id)
     if (error) console.error('Failed to update week:', error)
+    else {
+      const merged = { ...week, ...updates }
+      setWeek(merged)
+      cacheSet(`week_${familyId}_${week.start_date}`, merged)
+    }
+    return { error }
   }
 
   // Set a day number and recalc forward (only global no-school skips count)
@@ -366,7 +409,7 @@ export function useWeek(familyId) {
   const goToToday = () => setCurrentMonday(getMonday(new Date()))
 
   return {
-    week, weekDates, dayNumbers, globalNoSchool, personNoSchool, loading,
+    week, weekDates, dayNumbers, globalNoSchool, personNoSchool, loading, error, reload,
     goToPrevWeek, goToNextWeek, goToToday,
     setDayNumber, toggleGlobalNoSchool, togglePersonNoSchool,
   }

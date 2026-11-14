@@ -15,16 +15,20 @@ import RecurringManager from './components/RecurringManager'
 import CampView from './components/CampView'
 import BottomNav from './components/BottomNav'
 import SplashScreen from './components/SplashScreen'
+import { useResume } from './hooks/useResume'
+import { supabase } from './lib/supabase'
+import { cacheClearAll } from './lib/cache'
 
 export default function App() {
   const { user, loading: authLoading, signIn, signUp, signOut, sendOtp, verifyOtp, resetPassword } = useAuth()
-  const { family, loading: familyLoading, createFamily, joinFamily } = useFamily(user?.id)
+  const { family, loading: familyLoading, error: familyError, reload: reloadFamily, createFamily, joinFamily } = useFamily(user?.id)
   const {
     week, weekDates, dayNumbers, globalNoSchool, personNoSchool, loading: weekLoading,
+    error: weekError, reload: reloadWeek,
     goToPrevWeek, goToNextWeek, goToToday,
     setDayNumber, toggleGlobalNoSchool, togglePersonNoSchool,
   } = useWeek(family?.id)
-  const { entries, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
+  const { entries, stale: entriesStale, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
   const { items: recurringItems, add: addRecurring, remove: removeRecurring } = useRecurring(family?.id)
   const { camps, upsert: upsertCamp, remove: removeCamp } = useCamps(family?.id)
   const { words, saveWords } = useWords(week?.id, family?.id)
@@ -97,14 +101,47 @@ export default function App() {
 
   const allDataReady = !authLoading && (
     !user ||                                          // auth resolved, no user → show login
-    (!familyLoading && !family) ||                    // user exists but no family → show setup
+    (!familyLoading && !family) ||                    // user exists but no family → show setup (or load error)
     (!familyLoading && family && !weekLoading)         // full app ready
   )
   const splashReady = allDataReady && minTimeElapsed
 
+  // If startup has not finished after 10 seconds, stop pretending and offer a
+  // way out. The splash used to sit there indefinitely on a bad connection.
+  const [stalled, setStalled] = useState(false)
+  useEffect(() => {
+    if (allDataReady) return
+    const timer = setTimeout(() => setStalled(true), 10000)
+    return () => { clearTimeout(timer); setStalled(false) }
+  }, [allDataReady])
+
+  const resetSignIn = async () => {
+    cacheClearAll()
+    try {
+      await Promise.race([
+        supabase.auth.signOut({ scope: 'local' }),
+        new Promise((resolve) => setTimeout(resolve, 2000)),
+      ])
+    } catch { /* fall through to reload */ }
+    window.location.reload()
+  }
+
+  // Pick up new deploys. An installed iPhone web app can stay "open" for weeks,
+  // so the page itself has to notice a new version and reload.
+  useResume(() => {
+    if (__BUILD_ID__ === 'dev' || activeCell) return
+    fetch('/version.json', { cache: 'no-store' })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((info) => {
+        if (info?.build && info.build !== __BUILD_ID__) window.location.reload()
+      })
+      .catch(() => { /* offline: try again next time */ })
+  })
+
   // Determine what content to show beneath the splash
   const showAuth = !authLoading && !user
-  const showFamilySetup = !authLoading && user && !familyLoading && !family
+  const showFamilyError = !authLoading && user && !familyLoading && !family && familyError
+  const showFamilySetup = !authLoading && user && !familyLoading && !family && !familyError
 
   return (
     <ToastProvider>
@@ -115,6 +152,42 @@ export default function App() {
           isReady={splashReady}
           onComplete={() => setShowSplash(false)}
         />
+      )}
+
+      {/* Startup is taking too long: explain and offer a way out */}
+      {showSplash && stalled && !allDataReady && (
+        <div className="fixed inset-x-4 bottom-10 z-[60] bg-white rounded-xl shadow-xl p-4 text-center">
+          <p className="text-base font-semibold text-navy mb-1">Still loading</p>
+          <p className="text-sm text-slate mb-3">
+            This usually means a weak connection.
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="w-full min-h-[44px] bg-navy text-white rounded-lg text-sm font-medium active:scale-[0.98] transition"
+          >
+            Try again
+          </button>
+          <button
+            onClick={resetSignIn}
+            className="w-full min-h-[44px] mt-2 text-sm text-slate active:bg-gray-50 rounded-lg transition"
+          >
+            Sign in again
+          </button>
+        </div>
+      )}
+
+      {/* Signed in, but the family lookup failed (network), so do not show setup */}
+      {showFamilyError && (
+        <div className="min-h-screen flex flex-col items-center justify-center p-6 text-center">
+          <p className="text-lg font-bold text-navy mb-1">Can't reach the tracker</p>
+          <p className="text-sm text-slate mb-4">Check your connection and try again.</p>
+          <button
+            onClick={reloadFamily}
+            className="min-h-[44px] px-6 bg-navy text-white rounded-lg text-sm font-medium active:scale-[0.98] transition"
+          >
+            Try again
+          </button>
+        </div>
       )}
 
       {/* Auth screen (rendered behind splash when not logged in) */}
@@ -137,8 +210,31 @@ export default function App() {
       {user && family && <>
       {activeTab === 'week' && (
         <div className="animate-fadeIn">
+          {entriesStale && !weekLoading && week && (
+            <div className="bg-amber-50 border-b border-amber-200 text-amber-900 text-xs text-center px-3 py-2">
+              Offline. Showing the last saved copy; it will refresh when you reconnect.
+            </div>
+          )}
           {weekLoading ? (
             <div className="bg-navy text-white px-4 py-8 text-center text-sm animate-pulse">Loading week...</div>
+          ) : !week ? (
+            <div className="p-6 pt-16 text-center">
+              <p className="text-lg font-bold text-navy mb-1">Couldn't load this week</p>
+              <p className="text-sm text-slate mb-4">
+                {weekError?.message || 'Check your connection and try again.'}
+              </p>
+              <button
+                onClick={reloadWeek}
+                className="min-h-[44px] px-6 bg-navy text-white rounded-lg text-sm font-medium active:scale-[0.98] transition"
+              >
+                Try again
+              </button>
+              <div className="mt-3">
+                <button onClick={goToToday} className="min-h-[44px] px-4 text-sm text-slate">
+                  Back to this week
+                </button>
+              </div>
+            </div>
           ) : (
             <WeekView
               week={week}
@@ -207,6 +303,7 @@ export default function App() {
           >
             Sign out
           </button>
+          <p className="text-xs text-gray-400 text-center mt-4">Version {__BUILD_ID__}</p>
         </div>
         </div>
       )}

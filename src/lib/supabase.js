@@ -28,4 +28,21 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error(msg)
 }
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// No request may hang forever. On a weak connection an unanswered request used
+// to leave the app stuck on the splash screen with no way out.
+const REQUEST_TIMEOUT_MS = 15000
+
+function fetchWithTimeout(input, init = {}) {
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS)
+  const outer = init.signal
+  if (outer) {
+    if (outer.aborted) controller.abort()
+    else outer.addEventListener('abort', () => controller.abort(), { once: true })
+  }
+  return fetch(input, { ...init, signal: controller.signal }).finally(() => clearTimeout(timer))
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  global: { fetch: fetchWithTimeout },
+})
