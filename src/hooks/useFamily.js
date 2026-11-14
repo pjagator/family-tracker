@@ -1,26 +1,49 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
+import { cacheGet, cacheSet } from '../lib/cache'
 
 export function useFamily(userId) {
   const [family, setFamily] = useState(null)
-  const [loading, setLoading] = useState(true)
+  // Which user the current answer belongs to. Until the lookup for THIS user
+  // has finished we are still loading; otherwise a signed-in parent briefly
+  // (or, on a slow connection, lengthily) saw the create-a-family screen.
+  const [loadedFor, setLoadedFor] = useState(null)
+  const [error, setError] = useState(null)
+  const loading = Boolean(userId) && loadedFor !== userId
 
   const loadFamily = useCallback(async () => {
-    if (!userId) { setLoading(false); return }
+    if (!userId) { setFamily(null); setError(null); setLoadedFor(null); return }
 
-    const { data: membership, error } = await supabase
+    // Paint the saved copy first so a slow connection never blocks the app.
+    const cacheKey = `family_${userId}`
+    const cached = cacheGet(cacheKey)
+    if (cached) {
+      setFamily(cached)
+      setLoadedFor(userId)
+    }
+
+    const { data: membership, error: loadErr } = await supabase
       .from('family_members')
       .select('family_id, role, families(id, name, invite_code)')
       .eq('user_id', userId)
       .limit(1)
-      .single()
+      .maybeSingle()
 
-    if (error || !membership) {
+    if (loadErr) {
+      // A failed request is NOT the same as "no family". Treating it that way
+      // used to drop a signed-in parent onto the create-a-family screen.
+      console.error('Failed to load family:', loadErr)
+      if (!cached) setError(loadErr)
+    } else if (!membership) {
       setFamily(null)
+      setError(null)
     } else {
-      setFamily({ ...membership.families, role: membership.role })
+      const fam = { ...membership.families, role: membership.role }
+      setFamily(fam)
+      setError(null)
+      cacheSet(cacheKey, fam)
     }
-    setLoading(false)
+    setLoadedFor(userId)
   }, [userId])
 
   useEffect(() => {
@@ -72,5 +95,5 @@ export function useFamily(userId) {
     return { error: null }
   }
 
-  return { family, loading, createFamily, joinFamily }
+  return { family, loading, error, reload: loadFamily, createFamily, joinFamily }
 }
