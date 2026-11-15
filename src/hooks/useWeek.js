@@ -241,6 +241,7 @@ export function useWeek(familyId) {
           .from('entries')
           .select('person, category, date')
           .eq('week_id', data.id)
+          .eq('source', 'manual')
 
         // If we cannot see what is already there, do not add anything: adding
         // blind is how duplicate recurring entries appear.

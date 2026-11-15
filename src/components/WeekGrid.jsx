@@ -34,7 +34,7 @@ const PEOPLE = [
       { key: 'science', label: 'Science' },
       { key: 'ela', label: 'ELA' },
       { key: 'ss', label: 'Social St.' },
-      { key: 'spanish', label: 'Spanish' },
+      { key: 'spanish', label: 'Latin' },
       { key: 'religion', label: 'Religion' },
       { key: 'activities', label: 'Activities' },
     ],
@@ -106,7 +106,7 @@ function isWeekendDate(date) {
 export default function WeekGrid({
   weekDates, dayNumbers, globalNoSchool, personNoSchool,
   onDayNumberChange, onToggleGlobalNoSchool, onTogglePersonNoSchool,
-  onCellTap, onAllieToggle, getEntry,
+  onCellTap, onAllieToggle, getEntry, getItems = () => [],
   onPrev, onNext, onToday,
   isMobile,
 }) {
@@ -204,7 +204,9 @@ export default function WeekGrid({
     for (const date of weekDates) {
       for (const row of person.rows) {
         if (getEntry(person.key, row.key, date)?.content) count++
+        count += getItems(person.key, row.key, date).length
       }
+      count += getItems(person.key, 'other', date).length
     }
     return count
   }
@@ -319,6 +321,10 @@ export default function WeekGrid({
         {PEOPLE.map((person, personIdx) => {
           const isChild = CHILDREN.includes(person.key)
           const entryCount = getEntryCount(person)
+          // Synced items that match no row (PE, electives) get an "Other" row,
+          // shown only in weeks that have any.
+          const hasOther = weekDates.some(d => getItems(person.key, 'other', d).length > 0)
+          const rows = hasOther ? [...person.rows, { key: 'other', label: 'Other' }] : person.rows
 
           return (
             <div key={person.key} style={{ marginTop: personIdx > 0 ? '12px' : '0' }}>
@@ -390,7 +396,7 @@ export default function WeekGrid({
               {openSections[person.key] && (
                 <div className="animate-expandDown overflow-hidden">
                 <div className="grid" style={{ gridTemplateColumns: gridCols }}>
-                  {person.rows.map(({ key: cat, label }, rowIdx) => {
+                  {rows.map(({ key: cat, label }, rowIdx) => {
                     // Alternating row bg
                     const rowBgClass = rowIdx % 2 === 1 ? 'bg-gray-50/40' : ''
 
@@ -451,6 +457,7 @@ export default function WeekGrid({
                         {weekDates.map((date) => {
                           const entry = getDisplayEntry(person.key, cat, date)
                           const rawEntry = getEntry(person.key, cat, date)
+                          const items = getItems(person.key, cat, date)
                           const isToday = date === today
                           const isWeekend = isWeekendDate(date)
                           const dn = dayNumbers[date]
@@ -465,7 +472,7 @@ export default function WeekGrid({
                           }
 
                           // Show "No School" text for children on global off days
-                          if (isChild && globalSet.has(date) && !isWeekend && !entry?.content) {
+                          if (isChild && globalSet.has(date) && !isWeekend && !entry?.content && !items.length) {
                             const noSchoolEntry = { content: 'No School', _isPlaceholder: true }
                             return (
                               <EntryCell
@@ -485,12 +492,13 @@ export default function WeekGrid({
                             <EntryCell
                               key={date}
                               entry={entry}
+                              items={items}
                               date={date}
                               isToday={isToday}
                               isWeekend={isWeekend}
                               dimmed={dimmed}
                               rowBgClass={rowBgClass}
-                              onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry, dimmed })}
+                              onTap={() => onCellTap({ person: person.key, category: cat, date, entry: rawEntry, items, dimmed })}
                             />
                           )
                         })}

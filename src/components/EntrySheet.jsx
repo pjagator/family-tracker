@@ -4,7 +4,7 @@ import { useSwipeDismiss } from '../hooks/useSwipeDismiss'
 
 const CATEGORY_LABELS = {
   math: 'Math', science: 'Science', ela: 'ELA', ss: 'Social Studies',
-  spanish: 'Spanish', religion: 'Religion', activities: 'Activities',
+  spanish: 'Latin', other: 'Other', religion: 'Religion', activities: 'Activities',
   homework: 'Homework', specials: 'Specials', notes: 'Notes',
   work: 'Work', events: 'Events', schedule: 'Schedule',
 }
@@ -36,12 +36,13 @@ function linkifyContent(text) {
   return segments
 }
 
-export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
+export default function EntrySheet({ cell, onSave, onDelete, onClose, onToggleItem }) {
   const showToast = useToast()
   const [content, setContent] = useState('')
   const [isTest, setIsTest] = useState(false)
   const [isComplete, setIsComplete] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [items, setItems] = useState([])
   const inputRef = useRef(null)
   const handleSaveRef = useRef(null)
   const { sheetRef, onTouchStart, onTouchMove, onTouchEnd } = useSwipeDismiss({
@@ -53,7 +54,9 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
       setContent(cell.entry?.content || '')
       setIsTest(cell.entry?.is_test || false)
       setIsComplete(cell.entry?.is_complete || false)
-      setTimeout(() => inputRef.current?.focus(), 100)
+      setItems(cell.items || [])
+      // With synced items showing, do not pop the keyboard over them.
+      if (!cell.items?.length) setTimeout(() => inputRef.current?.focus(), 100)
     }
   }, [cell])
 
@@ -64,7 +67,18 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
   const personLabel = cell.person.charAt(0).toUpperCase() + cell.person.slice(1)
   const categoryLabel = CATEGORY_LABELS[cell.category] || cell.category
 
+  const toggleItem = (item) => {
+    const next = !item.is_complete
+    setItems(prev => prev.map(i => (i.id === item.id ? { ...i, is_complete: next } : i)))
+    onToggleItem?.(item.id, next)
+  }
+
   const handleSave = async () => {
+    // Nothing typed and nothing to update: just close, no empty row.
+    if (!cell.entry?.id && !content.trim() && !isTest && !isComplete) {
+      onClose()
+      return
+    }
     setSaving(true)
     await onSave({
       id: cell.entry?.id || null,
@@ -119,12 +133,47 @@ export default function EntrySheet({ cell, onSave, onDelete, onClose }) {
             <div className="text-xs text-gray-400 italic mb-2">This subject doesn't normally meet on this day</div>
           )}
 
+          {/* Items synced from a calendar feed: check off, or open the source */}
+          {items.length > 0 && (
+            <div className="mb-3 border border-gray-200 rounded-lg divide-y divide-gray-100">
+              {items.map((item) => (
+                <div key={item.id} className="flex items-center gap-2 px-3 min-h-[44px]">
+                  <label className="flex items-center gap-3 flex-1 py-2">
+                    <input
+                      type="checkbox"
+                      checked={!!item.is_complete}
+                      onChange={() => toggleItem(item)}
+                      className="w-5 h-5 rounded border-gray-300 text-complete focus:ring-complete shrink-0"
+                    />
+                    <span className={`text-sm leading-snug ${
+                      item.is_complete ? 'line-through text-gray-400' : item.is_test ? 'text-test font-semibold' : 'text-gray-800'
+                    }`}>
+                      {item.is_test && !item.is_complete && <span className="text-[10px] font-bold text-orange-500 mr-1">TEST</span>}
+                      {item.content}
+                    </span>
+                  </label>
+                  {item.source_url && (
+                    <a
+                      href={item.source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 underline min-h-[44px] flex items-center px-1 shrink-0"
+                    >
+                      Open
+                    </a>
+                  )}
+                </div>
+              ))}
+              <div className="px-3 py-1.5 text-[11px] text-gray-400">Synced automatically. Add your own note below.</div>
+            </div>
+          )}
+
           {/* Content input */}
           <textarea
             ref={inputRef}
             value={content}
             onChange={(e) => setContent(e.target.value)}
-            placeholder="What's happening..."
+            placeholder={items.length ? "Add a note..." : "What's happening..."}
             rows={3}
             className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-navy resize-none"
           />

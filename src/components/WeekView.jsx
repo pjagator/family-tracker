@@ -6,7 +6,7 @@ import { useMobileView } from '../hooks/useMobileView'
 export default function WeekView({
   week, weekDates, dayNumbers, globalNoSchool, personNoSchool,
   onDayNumberChange, onToggleGlobalNoSchool, onTogglePersonNoSchool,
-  entries, onPrev, onNext, onToday, onCellTap, onAllieToggle, getEntry,
+  entries, onPrev, onNext, onToday, onCellTap, onAllieToggle, getEntry, getItems,
   words, onSaveWords,
 }) {
   const { isMobile } = useMobileView()
@@ -33,6 +33,7 @@ export default function WeekView({
             onCellTap={onCellTap}
             onAllieToggle={onAllieToggle}
             getEntry={getEntry}
+            getItems={getItems}
             onPrev={onPrev}
             onNext={onNext}
             onToday={onToday}
