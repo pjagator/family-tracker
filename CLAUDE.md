@@ -44,12 +44,24 @@ Env: `.env.local` needs VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY (also set i
 - `recurring` (family_id, person, category, day_of_week 0-6, content, is_active,
   start_date, end_date)
 
+- `feeds` (family_id, person, label, kind 'canvas'|'ics', default_category, url, enabled,
+  last_synced_at, last_ok_at, last_status) — calendar links pasted in Settings
+- `entries` also has source ('manual'|'canvas'|'ics'), feed_id, source_uid, source_url,
+  due_at. One manual entry per cell; any number of synced items per cell.
+
+Feed sync: edge function `supabase/functions/sync-feeds` runs hourly from pg_cron
+(job `sync-feeds-hourly`, secret in Vault) and on demand from Settings. It writes this
+week plus three ahead, never changes is_complete, and only deletes vanished items dated
+today or later. Weeks it needs are created by the `ensure_week` SQL function. Schema
+changes live in `supabase/migrations/`. The hourly job also keeps the free-tier project
+from being paused for inactivity (it was paused Oct to Nov 2026, which took the app down).
+
 RLS on every table scopes rows to the user's family via family_members. Use the anon
 key client-side, never service role.
 
 ## Domain rules
 
-- People/categories: beau (math, science, ela, ss, spanish, religion, activities),
+- People/categories: beau (math, science, ela, ss, spanish [shown as Latin], religion, activities, other),
   lucia (homework, specials, activities), niva (activities, notes),
   allie (work, events), patrick (schedule, notes)
 - School runs a rotating Day 1–8 schedule (weekdays only). Beau: odd days = math,

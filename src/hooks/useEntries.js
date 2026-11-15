@@ -133,9 +133,30 @@ export function useEntries(weekId, familyId) {
     return { error: null }
   }
 
+  const isManual = (e) => (e.source ?? 'manual') === 'manual'
+
+  // The hand-typed entry for a cell (one per cell, as before).
   const getEntry = (person, category, date) => {
-    return entries.find(e => e.person === person && e.category === category && e.date === date) || null
+    return entries.find(e => e.person === person && e.category === category && e.date === date && isManual(e)) || null
   }
 
-  return { entries, loading, stale, upsertEntry, deleteEntry, getEntry, reload: loadEntries }
+  // Items pulled in from a calendar feed for a cell. Tests first.
+  const getItems = (person, category, date) => {
+    return entries
+      .filter(e => e.person === person && e.category === category && e.date === date && !isManual(e))
+      .sort((a, b) => (b.is_test ? 1 : 0) - (a.is_test ? 1 : 0) || a.content.localeCompare(b.content))
+  }
+
+  // Check a synced item off (or back on) without touching anything else.
+  const setItemComplete = async (id, isComplete) => {
+    setEntries(prev => prev.map(e => (e.id === id ? { ...e, is_complete: isComplete } : e)))
+    const { error } = await supabase.from('entries').update({ is_complete: isComplete }).eq('id', id)
+    if (error) {
+      console.error('Failed to update item:', error)
+      await loadEntries()
+    }
+    return { error }
+  }
+
+  return { entries, loading, stale, upsertEntry, deleteEntry, getEntry, getItems, setItemComplete, reload: loadEntries }
 }

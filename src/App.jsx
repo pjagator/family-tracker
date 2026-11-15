@@ -12,6 +12,8 @@ import FamilySetup from './components/FamilySetup'
 import WeekView from './components/WeekView'
 import EntrySheet from './components/EntrySheet'
 import RecurringManager from './components/RecurringManager'
+import FeedsManager from './components/FeedsManager'
+import { useFeeds } from './hooks/useFeeds'
 import CampView from './components/CampView'
 import BottomNav from './components/BottomNav'
 import SplashScreen from './components/SplashScreen'
@@ -28,7 +30,12 @@ export default function App() {
     goToPrevWeek, goToNextWeek, goToToday,
     setDayNumber, toggleGlobalNoSchool, togglePersonNoSchool,
   } = useWeek(family?.id)
-  const { entries, stale: entriesStale, upsertEntry, deleteEntry, getEntry } = useEntries(week?.id, family?.id)
+  const {
+    entries, stale: entriesStale, upsertEntry, deleteEntry, getEntry, getItems, setItemComplete,
+    reload: reloadEntries,
+  } = useEntries(week?.id, family?.id)
+  const { feeds, syncing, add: addFeed, remove: removeFeed, syncNow } = useFeeds(family?.id)
+  const afterSync = async (result) => { await reloadEntries(); return result }
   const { items: recurringItems, add: addRecurring, remove: removeRecurring } = useRecurring(family?.id)
   const { camps, upsert: upsertCamp, remove: removeCamp } = useCamps(family?.id)
   const { words, saveWords } = useWords(week?.id, family?.id)
@@ -252,6 +259,7 @@ export default function App() {
               onCellTap={(cell) => setActiveCell(cell)}
               onAllieToggle={handleAllieToggle}
               getEntry={getEntry}
+              getItems={getItems}
               words={words}
               onSaveWords={saveWords}
             />
@@ -290,6 +298,16 @@ export default function App() {
           </div>
 
           <div className="bg-gray-50 rounded-lg p-3 mb-4">
+            <FeedsManager
+              feeds={feeds}
+              syncing={syncing}
+              onAdd={async (feed) => afterSync(await addFeed(feed))}
+              onRemove={async (id) => afterSync(await removeFeed(id))}
+              onSyncNow={async () => afterSync(await syncNow())}
+            />
+          </div>
+
+          <div className="bg-gray-50 rounded-lg p-3 mb-4">
             <RecurringManager
               items={recurringItems}
               onAdd={addRecurring}
@@ -312,6 +330,7 @@ export default function App() {
         cell={activeCell}
         onSave={upsertEntry}
         onDelete={deleteEntry}
+        onToggleItem={setItemComplete}
         onClose={() => setActiveCell(null)}
       />
 
